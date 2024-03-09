@@ -1,0 +1,44 @@
+add reg1 reg2->dstreg
+sub ----------------
+or -----------------
+and ----------------
+load reg_dst mem_src
+	reg_dst->mem_src
+
+store reg_src mem_dst
+	reg_src->mem_dst
+
+limm reg_dst raw_value
+	reg_dst<-raw_value
+
+jmp dst_pc
+	curr_pc->prev_pc
+	dst_pc->curr_pc
+
+ret 
+	prev_pc->curr_pc
+
+label
+	curr_pc->prev_pc
+
+cmp   value_reg raw_value
+	if value_reg-raw_value=0
+		1->bz_flag
+	else
+		0->bz_flag
+	
+bz   addr_value
+	if bz_flag
+		curr_pc->prev_pc
+		addr_value->curr_pc
+		0->bz_flag
+	else
+		nada	
+
+bnz  addr_value
+	if not bz_flag
+		curr_pc->prev_pc
+		addr_value->curr_pc
+		0->bz_flag
+	else
+		nada	

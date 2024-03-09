@@ -173,9 +173,10 @@ void switchOnCPU(cpu*proc){
 		loadValue(proc->mem,proc->curr_pc*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
 		execute(proc,value);
 		dprintf(1,"\e[2J");
+		printMemory(1,proc->mem);
 		printCPU(1,proc);
 		dprintf(1,"Press enter!\n");
-		
+		getchar();
 	}
 
 }
