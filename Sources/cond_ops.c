@@ -61,3 +61,17 @@ void bz(cpu*proc,u_int32_t inst){
 
 	}
 }
+void bnz(cpu*proc,u_int32_t inst){
+	u_int32_t addr_val;
+	process_cond_op(proc,inst,&addr_val);
+	
+	switch(proc->bz_flag){
+		case 0:
+			proc->prev_pc=proc->curr_pc;
+			proc->curr_pc=addr_val;
+			break;
+		default:
+			break;
+
+	}
+}

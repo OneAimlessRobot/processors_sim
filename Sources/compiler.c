@@ -25,6 +25,7 @@ name_code_pair conv_table[]={
 					{"label",LAB},
 					{"cmp",CMP},
 					{"bz",BZERO},
+					{"bnz",BNZERO},
 					{NULL,0}
 			};
 
@@ -108,7 +109,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=code;
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
-		result|=mask_photograph(proc->alu_op_size_mask,alu3);
+		result|=mask_photograph(proc->alu_dst_mask,alu3);
 		break;
 	case LMEM:
 		if(!sscanf(buff,"%u%u%u%u",&mem1,&mem2,&mem3,&mem4)){
@@ -129,7 +130,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=code;
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
-		result|=mask_photograph(proc->alu_op_size_mask,alu3);
+		result|=mask_photograph(proc->alu_dst_mask,alu3);
 		break;
 	case STO:
 		if(!sscanf(buff,"%u%u%u%u",&mem1,&mem2,&mem3,&mem4)){
@@ -159,7 +160,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=code;
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
-		result|=mask_photograph(proc->alu_op_size_mask,alu3);
+		result|=mask_photograph(proc->alu_dst_mask,alu3);
 		break;
 	case OR:
 		if(!sscanf(buff,"%u%u%u",&alu1,&alu2,&alu3)){
@@ -169,7 +170,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=code;
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
-		result|=mask_photograph(proc->alu_op_size_mask,alu3);
+		result|=mask_photograph(proc->alu_dst_mask,alu3);
 		break;
 	case JMP:
 		if(!sscanf(buff,"%u",&jmp_addr)){
@@ -200,6 +201,14 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->cmp_value_mask,cmp_value);
 		break;
 	case BZERO:
+		if(!sscanf(buff,"%u",&bzero_addr)){
+			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
+			return result;
+		}
+		result|=code;
+		result|=mask_photograph(proc->jmp_addr_mask,bzero_addr);
+		break;
+	case BNZERO:
 		if(!sscanf(buff,"%u",&bzero_addr)){
 			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
 			return result;

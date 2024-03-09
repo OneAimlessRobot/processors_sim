@@ -150,6 +150,10 @@ static void execute(cpu*proc,u_int32_t inst){
 			dprintf(1,"Ret!\n");
 			bz(proc,inst);
 			break;
+		case BNZERO:
+			dprintf(1,"Ret!\n");
+			bnz(proc,inst);
+			break;
 		default:
 			dprintf(1,"Desconhecida\n");
 			break;
@@ -171,7 +175,7 @@ void switchOnCPU(cpu*proc){
 		dprintf(1,"\e[2J");
 		printCPU(1,proc);
 		dprintf(1,"Press enter!\n");
-		getchar();
+		
 	}
 
 }

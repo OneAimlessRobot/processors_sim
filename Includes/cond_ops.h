@@ -5,4 +5,5 @@ void ret(cpu*proc,u_int32_t inst);
 void label(cpu*proc,u_int32_t inst);
 void cmp(cpu*proc,u_int32_t inst);
 void bz(cpu*proc,u_int32_t inst);
+void bnz(cpu*proc,u_int32_t inst);
 #endif

@@ -15,7 +15,8 @@ typedef enum {ADD=0x10000000,
 			RET=0x90000000,
 			LAB=0xa0000000,
 			CMP=0xb0000000,
-			BZERO=0xc0000000
+			BZERO=0xc0000000,
+			BNZERO=0xd0000000
 			}op_code;
 
 #define OP_CODE_MASK 0xF0000000

@@ -21,6 +21,7 @@ void sigint_handler(int param){
 	if(fpcompiled){
 		fclose(fpcompiled);
 	}
+	getchar();
 	exit(-1);
 
 }
