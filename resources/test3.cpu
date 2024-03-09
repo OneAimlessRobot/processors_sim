@@ -1,0 +1,12 @@
+label;
+limm 3 1000;
+limm 2 1000;
+limm 6 2000;
+add 3 2 1;
+limm 4 69;
+cmp 6 1000;
+add 6 1 5;
+bz 10;
+limm 7 40;
+store 4 7;
+load 5 7;

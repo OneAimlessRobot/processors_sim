@@ -1,0 +1,9 @@
+#ifndef CPU_H
+#define CPU_H
+typedef struct cpu{
+
+	alu* alu;
+	
+}cpu;
+
+#endif
