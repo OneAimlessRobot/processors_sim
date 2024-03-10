@@ -1,5 +1,5 @@
 //size of register file (bytes) (dec)
-60
+28
 
 //masks must be hex strings of 32 bits
 //op_code mask

@@ -37,9 +37,6 @@ void ret(cpu*proc,u_int32_t inst){
 	proc->curr_pc=proc->prev_pc+addr_val;
 	proc->prev_pc=proc->curr_pc;
 }
-void label(cpu*proc,u_int32_t inst){
-	proc->prev_pc=proc->curr_pc;
-}
 void cmp(cpu*proc,u_int32_t inst){
 	u_int32_t value;
 	u_int8_t reg;
@@ -56,7 +53,6 @@ void bz(cpu*proc,u_int32_t inst){
 		default:
 			proc->prev_pc=proc->curr_pc;
 			proc->curr_pc=addr_val;
-			proc->bz_flag=0;
 			break;
 
 	}

@@ -18,8 +18,6 @@ jmp dst_pc
 ret 
 	prev_pc->curr_pc
 
-label
-	curr_pc->prev_pc
 
 cmp   value_reg raw_value
 	if value_reg-raw_value=0

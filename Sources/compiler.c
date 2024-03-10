@@ -1,5 +1,7 @@
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -12,6 +14,13 @@
 #include "../Includes/mem_ops.h"
 #include "../Includes/cond_ops.h"
 #include "../Includes/compiler.h"
+
+static u_int32_t code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
+#define MAX_NAMES 1024
+#define TMP_FILE_NAME "tmp.tmp"
+#define TMP_FILE2_NAME "tmp2.tmp"
+static FILE* fpmid=NULL,*fpalmost=NULL;
+
 name_code_pair conv_table[]={
 					{"add",ADD},
 					{"sub",SUB},
@@ -22,12 +31,16 @@ name_code_pair conv_table[]={
 					{"store",STO},
 					{"jmp",JMP},
 					{"ret",RET},
-					{"label",LAB},
 					{"cmp",CMP},
 					{"bz",BZERO},
 					{"bnz",BNZERO},
 					{NULL,0}
 			};
+
+
+name_addr_value_triple avail_names[MAX_NAMES]={0};
+
+name_addr_pair avail_labels[MAX_NAMES]={0};
 
 static u_int32_t mask_photograph(u_int32_t mask,u_int32_t value){
 	u_int8_t advance=firstBitOne(mask);
@@ -51,6 +64,48 @@ static int strings_are_equal(char* str1,char* str2){
 
 }
 
+static name_addr_pair* find_in_label_table(name_addr_pair table[],char* string){
+	if(!string){
+		printf("null string in compiler curr label finder!!!!\n");
+		return NULL;
+	}
+	if(!strlen(string)){
+		printf("empty string in compiler curr label finder!!!!\n");
+		return NULL;
+	}
+	for(int i=0;table[i].string;i++){
+		
+		if(strings_are_equal(table[i].string,string)){
+		printf("label %s %u found!!! label finder!!!!\n",table[i].string,table[i].addr);
+			return &table[i];
+		}
+
+	}
+	return NULL;
+
+
+}
+static name_addr_value_triple* find_in_var_table(name_addr_value_triple table[],char* string){
+	if(!string){
+		printf("null string in compiler curr var finder!!!!\n");
+		return NULL;
+	}
+	if(!strlen(string)){
+		printf("empty string in compiler curr var finder!!!!\n");
+		return NULL;
+	}
+	for(int i=0;table[i].string;i++){
+		
+		if(strings_are_equal(table[i].string,string)){
+		printf("var %s %u %d found!!! var finder!!!!\n",table[i].string,table[i].value,table[i].addr);
+			return &table[i];
+		}
+
+	}
+	return NULL;
+
+
+}
 static u_int32_t find_in_conv_table(name_code_pair table[],char* string){
 	if(!string){
 		printf("null string in compiler instruction finder!!!!\n");
@@ -73,21 +128,44 @@ static u_int32_t find_in_conv_table(name_code_pair table[],char* string){
 
 
 }
-static void get_next_instruction(FILE* fp,char buff[1024]){
+static int32_t find_in_string_arr(char* table[],char* string){
+	if(!string){
+		printf("null string in compiler keyword finder!!!!\n");
+		return -1;
+	}
+	if(!strlen(string)){
+		printf("empty string in compiler keyword finder!!!!\n");
+		return -1;
+	}
+	for(int i=0;table[i];i++){
+		
+		if(strings_are_equal(table[i],string)){
+			return i;
+		}
+
+	}
+	return -1;
+	
+
+
+}
+static int32_t get_next_instruction(FILE* fp,char buff[1024]){
 	
 	skip_cpu_comments(fp);
+	int32_t init_of_instr=ftell(fp);
 	int curr_char=0;
 	u_int64_t curr_char_index=0;
 	memset(buff,0,1024);
-	while((curr_char=fgetc(fp))!=';'&&curr_char !=EOF){
+	while((curr_char=fgetc(fp))!=';'&&(curr_char)!=':'&&curr_char !=EOF){
 		buff[curr_char_index++]=(char)curr_char;
 	}
-	
 	if(curr_char==EOF){
 	memset(buff,0,1024);
-	return;
+	return init_of_instr;
 	}
+	buff[curr_char_index]=curr_char;
 	skip_cpu_comments(fp);
+	return init_of_instr;
 	
 }
 static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
@@ -188,9 +266,6 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=code;
 		result|=mask_photograph(proc->jmp_addr_mask,ret_off);
 		break;
-	case LAB:
-		result|=code;
-		break;
 	case CMP:
 		if(!sscanf(buff,"%u%u",&cmp_reg,&cmp_value)){
 			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
@@ -234,23 +309,292 @@ static u_int32_t process_instruction(cpu*proc,char buff[1024]){
 
 }
 
-
-void compile(cpu*proc,FILE* fpin,FILE* fpout){
-	char buff[1024]={0};
-	u_int32_t num_of_inst=0;
-	do{
-	get_next_instruction(fpin,buff);
-	num_of_inst++;
-	}while(strlen(buff));
+void substitute_vars(int instr_pos,char buff[1024]){
 	
-	fprintf(fpout,"%x\n",num_of_inst);
-	rewind(fpin);
-	for(u_int32_t i=0;i<num_of_inst-1;i++){
-	get_next_instruction(fpin,buff);
+	int curr_str_len=strlen(buff);
+	if(!curr_str_len){
+		return;
+	}
+	int subst_cursor=0;
+	char newInstr[1024]={0};
+	char* ptr=newInstr;
+	char* old_buff_ptr=buff;
+	char curr_token[128]={0};
+	while(1){
+	sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor);
+	if(!strlen(curr_token)){
+
+		break;
+	}
+	int putsemicolon=0;
+	if(curr_token[strlen(curr_token)-1]==';'){
+		putsemicolon=1;
+		curr_token[strlen(curr_token)-1]=0;
+	}
+	else if(curr_token[strlen(curr_token)-1]==':'){
+
+		curr_token[strlen(curr_token)-1]=0;
+		return;
+	}
+		name_addr_value_triple* trip=NULL;
+		
+
+		if((trip=find_in_var_table(avail_names,curr_token))){
+			ptr+=snprintf(ptr,128,"%d ",trip->value);
+
+		}
+		else{
+			ptr+=snprintf(ptr,128,"%s ",curr_token);
+
+		}
+			if(putsemicolon){
+			ptr[-1]=';';
+				break;
+			}
+
+		old_buff_ptr+=subst_cursor;
+		memset(curr_token,0,128);
+	}
+	fseek(fpmid,instr_pos,SEEK_SET);
+	char whitespace[curr_str_len];
+	memset(whitespace,' ',curr_str_len);
+	fwrite(whitespace,1,curr_str_len,fpmid);
+	fseek(fpmid,instr_pos,SEEK_SET);
+	fwrite(newInstr,1,strlen(newInstr),fpmid);
+
+}
+void substitute_labels(int instr_pos,char buff[1024]){
+	
+	int curr_str_len=strlen(buff);
+	if(!curr_str_len){
+		return;
+	}
+	int subst_cursor=0;
+	char newInstr[1024]={0};
+	char* ptr=newInstr;
+	char* old_buff_ptr=buff;
+	char curr_token[128]={0};
+	while(1){
+	sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor);
+	if(!strlen(curr_token)){
+
+		break;
+	}
+	int putsemicolon=0;
+	
+	if(curr_token[strlen(curr_token)-1]==';'){
+		putsemicolon=1;
+		curr_token[strlen(curr_token)-1]=0;
+	}
+	else if(curr_token[strlen(curr_token)-1]==':'){
+
+		curr_token[strlen(curr_token)-1]=0;
+		return;
+	}
+		name_addr_pair* trip=NULL;
+
+		if((trip=find_in_label_table(avail_labels,curr_token))){
+			ptr+=snprintf(ptr,128,"%d ",trip->addr);
+
+		}
+		else{
+			ptr+=snprintf(ptr,128,"%s ",curr_token);
+
+		}
+			if(putsemicolon){
+			ptr[-1]=';';
+				break;
+			}
+
+		old_buff_ptr+=subst_cursor;
+		memset(curr_token,0,128);
+	}
+	fseek(fpmid,instr_pos,SEEK_SET);
+	char whitespace[curr_str_len];
+	memset(whitespace,' ',curr_str_len);
+	fwrite(whitespace,1,curr_str_len,fpmid);
+	fseek(fpmid,instr_pos,SEEK_SET);
+	fwrite(newInstr,1,strlen(newInstr),fpmid);
+
+}
+
+void process_data(char buff[1024]){
+
+	do{
+	get_next_instruction(fpmid,buff);
+	code_data_start=ftell(fpmid);
+	}while(!strings_are_equal(buff,".data:"));
+	
+	code_code_start=code_data_start;
+	while(1){
+	get_next_instruction(fpmid,buff);
+	code_code_start=ftell(fpmid);
+	if(strings_are_equal(buff,".code:")){
+		break;
+	}
+	name_addr_value_triple trip={NULL,0,0};
+	sscanf(buff,"%ms%u",&trip.string,&trip.value);
+	
+	trip.addr=num_of_names;
+	if(trip.string){
+
+		printf("%s %u %d\n",trip.string,trip.addr, trip.value);
+		avail_names[num_of_names]=trip;
+	}
+	else{
+		printf("erro a parsear var\n");
+	}
+	num_of_names++;
+	}
+}
+u_int32_t instr_buff_is_space(char buff[1024]){
+	u_int32_t result=1;
+	for(int i=0;(buff[i]!=';')&&(buff[i]!=':');i++){
+		result=(result&&isspace(buff[i]));
+	}
+	return result;
+
+}
+void substitute_all_vars(void){
+	char buff[1024];
+	while(1){
+	int instr_pos=get_next_instruction(fpmid,buff);
+	if(instr_buff_is_space(buff)){
+	continue;
+	}
+	if(feof(fpmid)||ferror(fpmid)){
+		break;
+	}
+	substitute_vars(instr_pos,buff);
+	}
+	
+}
+void get_all_labels(void){
+	char buff[1024];
+	while(1){
+	get_next_instruction(fpmid,buff);
+	if(instr_buff_is_space(buff)){
+		continue;
+	}
+	curr_code++;
+	if(feof(fpmid)||ferror(fpmid)){
+		break;
+	}
+	if(buff[strlen(buff)-1]==':'){
+		buff[strlen(buff)-1]=0;
+		name_addr_pair* p=&avail_labels[num_of_labels++];
+		p->string=malloc(strlen(buff)+1);
+		memset(p->string,0,strlen(buff)+1);
+		strcpy(p->string,buff);
+		p->addr=curr_code-1;
+	}
+	}
+	printf("Labels:\n");
+	for(u_int32_t i=0;i<num_of_labels;i++){
+		printf("Label: nome: %s, address: %u\n",avail_labels[i].string,avail_labels[i].addr);
+	}
+	
+	
+}
+void substitute_all_labels(void){
+	char buff[1024];
+	while(1){
+	int instr_pos=get_next_instruction(fpmid,buff);
+	if(instr_buff_is_space(buff)){
+
+		continue;
+	}
+	if(feof(fpmid)||ferror(fpmid)){
+		break;
+	}
+	substitute_labels(instr_pos,buff);
+	}
+	
+}
+void copyInputFile(FILE* fpin){
+
+	char buff[1024]={0};
+	int num_read=0;
+	while((num_read=fread(buff,1,1024,fpin))){
+		fwrite(buff,1,num_read,fpmid);
+	}
+	
+}
+void copyCleanBinary(FILE* fin){
+
+	u_int32_t value=0;
+	printf("cheguei!!!\n");
+	if(fscanf(fpalmost,"%x",&value)){
+			fprintf(fin,"%x\n",value);
+	}
+	printf("cheguei!!!\n");
+	while(!feof(fpalmost)){
+		fscanf(fpalmost,"%x",&value);
+		if(value){
+			fprintf(fin,"%x\n",value);
+		}
+	}
+	printf("cheguei!!!\n");
+}
+void compile(cpu*proc,FILE* fpin,FILE* fpout){
+	u_int32_t num_of_inst=0;
+	if(!(fpmid=fopen(TMP_FILE_NAME,"w"))){
+		perror("Error opening tmp file while compiling!!!!\n");
+		return;
+	}
+	copyInputFile(fpin);
+	fclose(fpmid);
+	
+	if(!(fpmid=fopen(TMP_FILE_NAME,"r+"))){
+		perror("Error opening tmp file while compiling!!!!\n");
+		return;
+	}
+	if(!(fpalmost=fopen(TMP_FILE2_NAME,"w+"))){
+		fclose(fpmid);
+		perror("Error opening tmp file while compiling!!!!\n");
+		return;
+	}
+	char buff[1024];
+	process_data(buff);
+	fseek(fpmid,code_code_start,SEEK_SET);
+	memset(buff,1,1023);
+	substitute_all_vars();
+	fseek(fpmid,code_code_start,SEEK_SET);
+	memset(buff,1,1023);
+	get_all_labels();
+	buff[1023]=0;
+	fseek(fpmid,code_code_start,SEEK_SET);
+	memset(buff,1,1023);
+	substitute_all_labels();
+	fseek(fpmid,code_code_start,SEEK_SET);
+	while(strlen(buff)){
+	get_next_instruction(fpmid,buff);
+	num_of_inst++;
+	}
+
+	fprintf(fpalmost,"%x\n",num_of_inst);
+	fseek(fpmid,code_code_start,SEEK_SET);
+	for(u_int32_t i=0;i<num_of_inst;i++){
+	get_next_instruction(fpmid,buff);
 	u_int32_t inst=0x0;
 	if(strlen(buff)){
 	inst=process_instruction(proc,buff);
+	fprintf(fpalmost,"%x\n",inst);
 	}
-	fprintf(fpout,"%x\n",inst);
 	}
+	rewind(fpalmost);
+	copyCleanBinary(fpout);
+	for(u_int32_t i=0;i<num_of_names;i++){
+		free(avail_names[i].string);
+		
+	}
+	for(u_int32_t i=0;i<num_of_labels;i++){
+		free(avail_labels[i].string);
+		
+	}
+	fclose(fpmid);
+	fclose(fpalmost);
+	remove(TMP_FILE_NAME);
+	remove(TMP_FILE2_NAME);
+	
 }

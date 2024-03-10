@@ -1,19 +1,16 @@
-limm 3 3;
-limm 5 1;
-limm 7 0;
-limm 4 20;
-add 7 7 2;
+.data:
+polar 0;
+ploar 1;
+midgar 1;
+plroa 1337;
+.code:
+limm 7 plroa;
+limm 3 midgar;
+limm 2 polar;
 add 7 7 6;
-label;
+label:
 add 3 2 2;
 cmp 2 18;
-bnz 11;
-jmp 333;
-add 5 4 4;
-store 4 4;
-add 5 6 6;
-cmp 6 10;
-bnz 7;
-
-
-
+bz end;
+bnz label;
+end:

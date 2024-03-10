@@ -138,10 +138,6 @@ static void execute(cpu*proc,u_int32_t inst){
 			dprintf(1,"Ret!\n");
 			ret(proc,inst);
 			break;
-		case LAB:
-			dprintf(1,"Ret!\n");
-			label(proc,inst);
-			break;
 		case CMP:
 			dprintf(1,"Ret!\n");
 			cmp(proc,inst);
@@ -273,12 +269,13 @@ cpu* spawnCPU(memory*mem){
         result->mem=mem;
         result->curr_pc=0;
 	result->prev_pc=0;
+	result->bz_flag=0;
 	if(!load_cpu_masks(result)){
 
 		result->mem=NULL;
 		endCPU(&result);
 	}
-	result->reg_file= (u_int8_t*)malloc(result->reg_file_size=REG_FILE_DEF_SIZE);
+	result->reg_file= (u_int8_t*)malloc(result->reg_file_size);
         memset(result->reg_file,0,result->reg_file_size);
         return result;
 }

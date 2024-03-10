@@ -37,21 +37,20 @@ int main(int argc, char ** argv){
 		perror("Invalid file path!!!\n");
 		exit(-1);
 	}
+	
 	mem=spawnMemory();
-	proc= spawnCPU(mem);
+	proc=spawnCPU(mem);
 	if(!proc){
-
+		printf("ERRO A INICIAR CPU!!!\n");
 		raise(SIGINT);
 	}
-
 	compile(proc,fpcode,fpcompiled);
 	fclose(fpcompiled);
 	if(!(fpcompiled=fopen(INSTR_FILE_PATH,"r"))){
+		perror("Invalid file path!!!\n");
 		raise(SIGINT);
 	}
 	initMemory(fpcompiled,mem);
-	printMemory(1,mem);
-	getchar();
 	switchOnCPU(proc);
 	raise(SIGINT);
 }
