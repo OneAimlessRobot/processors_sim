@@ -12,12 +12,29 @@
 #include "../Includes/cond_ops.h"
 #include "../Includes/mem_ops.h"
 
-
 u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex){
 
 	return *(u_int32_t*)(&proc->reg_file[regIndex*WORD_SIZE]);
 
 }
+void loadProg(cpu* proc){
+	u_int32_t value;
+	u_int32_t curr_cell=0;
+	proc->process.proc_start|=0;
+	loadValue(proc->mem,proc->process.proc_start*WORD_SIZE,WORD_SIZE,(void*)&value);
+	curr_cell++;
+	while((curr_cell<(proc->mem->size/WORD_SIZE))){
+		loadValue(proc->mem,curr_cell*WORD_SIZE,WORD_SIZE,(void*)&value);
+		curr_cell++;
+		if(!value){
+			break;
+		}
+	}
+	proc->process.proc_end|=curr_cell;
+
+
+}
+
 void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8_t reg_addr) {
     u_int8_t word_size=WORD_SIZE;
    base*=word_size;
@@ -162,14 +179,12 @@ static void execute(cpu*proc,u_int32_t inst){
 }
 
 void switchOnCPU(cpu*proc){
-	u_int32_t program_init=0;
-	loadValue(proc->mem,0,(u_int32_t)sizeof(program_init),(void*) &program_init);
-	while((proc->curr_pc<program_init)){
+	proc->curr_pc=proc->process.proc_start;
+	while((proc->curr_pc<proc->process.proc_end)){
 		u_int32_t value=0;
 		loadValue(proc->mem,proc->curr_pc*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
 		execute(proc,value);
 		dprintf(1,"\e[2J");
-		printMemory(1,proc->mem);
 		printCPU(1,proc);
 		dprintf(1,"Press enter!\n");
 		getchar();
@@ -267,6 +282,8 @@ FILE* fp=NULL;
 cpu* spawnCPU(memory*mem){
         cpu* result= malloc(sizeof(cpu));
         result->mem=mem;
+	result->process.proc_start=0;
+	result->process.proc_end=0;
         result->curr_pc=0;
 	result->prev_pc=0;
 	result->bz_flag=0;
@@ -290,7 +307,7 @@ static void printCPURegs(int fd,cpu* processor){
 
        dprintf(fd,"State of the registers:\nSize: %u\n",processor->reg_file_size);
         for(u_int8_t i=0;i<processor->reg_file_size/WORD_SIZE;i++){
-        	dprintf(fd,"Reg %u: [",i);
+        	dprintf(fd,"Reg %u: Value: %u [",i,getProcRegValue(processor,i));
 	        printWord(fd, getProcRegValue(processor,i));
 		dprintf(fd,"]\n");
         }
@@ -300,6 +317,6 @@ static void printCPURegs(int fd,cpu* processor){
 void printCPU(int fd,cpu* processor){
 	dprintf(fd,"\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
 	printCPURegs(fd,processor);
-	dprintf(fd,"\nPC: %u\nPrev. PC: %u\nZero flag: %u\n",processor->curr_pc,processor->prev_pc,processor->bz_flag);
+	dprintf(fd,"\nPC: %u\nPrev. PC: %u\nZero flag: %u\ncontext start: %u\ncontext end: %u\n",processor->curr_pc,processor->prev_pc,processor->bz_flag,processor->process.proc_start,processor->process.proc_end);
 }
 

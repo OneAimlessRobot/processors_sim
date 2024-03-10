@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -18,8 +19,7 @@
 static u_int32_t code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
 #define MAX_NAMES 1024
 #define TMP_FILE_NAME "tmp.tmp"
-#define TMP_FILE2_NAME "tmp2.tmp"
-static FILE* fpmid=NULL,*fpalmost=NULL;
+static FILE* fpmid=NULL;
 
 name_code_pair conv_table[]={
 					{"add",ADD},
@@ -316,13 +316,16 @@ void substitute_vars(int instr_pos,char buff[1024]){
 		return;
 	}
 	int subst_cursor=0;
+	int ntokens=0;
 	char newInstr[1024]={0};
 	char* ptr=newInstr;
 	char* old_buff_ptr=buff;
 	char curr_token[128]={0};
 	while(1){
-	sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor);
-	if(!strlen(curr_token)){
+
+	if(sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor)>0){
+		ntokens++;
+	}if(!strlen(curr_token)){
 
 		break;
 	}
@@ -338,12 +341,16 @@ void substitute_vars(int instr_pos,char buff[1024]){
 	}
 		name_addr_value_triple* trip=NULL;
 		
-
+		if(ntokens==1&&!find_in_conv_table(conv_table,curr_token)){
+				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
+				raise(SIGINT);
+		}
 		if((trip=find_in_var_table(avail_names,curr_token))){
 			ptr+=snprintf(ptr,128,"%d ",trip->value);
 
 		}
 		else{
+			
 			ptr+=snprintf(ptr,128,"%s ",curr_token);
 
 		}
@@ -371,11 +378,14 @@ void substitute_labels(int instr_pos,char buff[1024]){
 	}
 	int subst_cursor=0;
 	char newInstr[1024]={0};
+	int ntokens=0;
 	char* ptr=newInstr;
 	char* old_buff_ptr=buff;
 	char curr_token[128]={0};
 	while(1){
-	sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor);
+	if(sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor)>0){
+		ntokens++;
+	}
 	if(!strlen(curr_token)){
 
 		break;
@@ -392,7 +402,11 @@ void substitute_labels(int instr_pos,char buff[1024]){
 		return;
 	}
 		name_addr_pair* trip=NULL;
-
+		
+		if(ntokens==1&&!find_in_conv_table(conv_table,curr_token)){
+				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
+				raise(SIGINT);
+		}
 		if((trip=find_in_label_table(avail_labels,curr_token))){
 			ptr+=snprintf(ptr,128,"%d ",trip->addr);
 
@@ -476,7 +490,6 @@ void get_all_labels(void){
 	if(instr_buff_is_space(buff)){
 		continue;
 	}
-	curr_code++;
 	if(feof(fpmid)||ferror(fpmid)){
 		break;
 	}
@@ -488,6 +501,8 @@ void get_all_labels(void){
 		strcpy(p->string,buff);
 		p->addr=curr_code-1;
 	}
+	
+	curr_code++;
 	}
 	printf("Labels:\n");
 	for(u_int32_t i=0;i<num_of_labels;i++){
@@ -520,22 +535,6 @@ void copyInputFile(FILE* fpin){
 	}
 	
 }
-void copyCleanBinary(FILE* fin){
-
-	u_int32_t value=0;
-	printf("cheguei!!!\n");
-	if(fscanf(fpalmost,"%x",&value)){
-			fprintf(fin,"%x\n",value);
-	}
-	printf("cheguei!!!\n");
-	while(!feof(fpalmost)){
-		fscanf(fpalmost,"%x",&value);
-		if(value){
-			fprintf(fin,"%x\n",value);
-		}
-	}
-	printf("cheguei!!!\n");
-}
 void compile(cpu*proc,FILE* fpin,FILE* fpout){
 	u_int32_t num_of_inst=0;
 	if(!(fpmid=fopen(TMP_FILE_NAME,"w"))){
@@ -546,11 +545,6 @@ void compile(cpu*proc,FILE* fpin,FILE* fpout){
 	fclose(fpmid);
 	
 	if(!(fpmid=fopen(TMP_FILE_NAME,"r+"))){
-		perror("Error opening tmp file while compiling!!!!\n");
-		return;
-	}
-	if(!(fpalmost=fopen(TMP_FILE2_NAME,"w+"))){
-		fclose(fpmid);
 		perror("Error opening tmp file while compiling!!!!\n");
 		return;
 	}
@@ -572,18 +566,17 @@ void compile(cpu*proc,FILE* fpin,FILE* fpout){
 	num_of_inst++;
 	}
 
-	fprintf(fpalmost,"%x\n",num_of_inst);
 	fseek(fpmid,code_code_start,SEEK_SET);
 	for(u_int32_t i=0;i<num_of_inst;i++){
 	get_next_instruction(fpmid,buff);
 	u_int32_t inst=0x0;
 	if(strlen(buff)){
 	inst=process_instruction(proc,buff);
-	fprintf(fpalmost,"%x\n",inst);
+	if(inst){
+	fprintf(fpout,"%x\n",inst);
 	}
 	}
-	rewind(fpalmost);
-	copyCleanBinary(fpout);
+	}
 	for(u_int32_t i=0;i<num_of_names;i++){
 		free(avail_names[i].string);
 		
@@ -593,8 +586,5 @@ void compile(cpu*proc,FILE* fpin,FILE* fpout){
 		
 	}
 	fclose(fpmid);
-	fclose(fpalmost);
-	remove(TMP_FILE_NAME);
-	remove(TMP_FILE2_NAME);
 	
 }

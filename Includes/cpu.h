@@ -19,7 +19,10 @@ typedef enum {ADD=0x10000000,
 			}op_code;
 
 #define OP_CODE_MASK 0xF0000000
+typedef struct context{
+	u_int32_t proc_start,proc_end;
 
+}context;
 typedef struct cpu{
 
 	u_int8_t* reg_file;
@@ -47,11 +50,13 @@ typedef struct cpu{
 	u_int32_t cmp_reg_mask,
 			cmp_value_mask;
 
+	context process;
 }cpu;
 
 
 void switchOnCPU(cpu*proc);
 cpu* spawnCPU(memory*mem);
+void loadProg(cpu*proc);
 void endCPU(cpu** processor);
 void printCPU(int fd,cpu* processor);
 void decodeInstruction(cpu*proc,u_int32_t inst);

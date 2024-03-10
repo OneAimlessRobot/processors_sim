@@ -4,14 +4,14 @@ ploar 1;
 midgar 1;
 plroa 1337;
 .code:
-limm 6 plroa;
-limm 3 midgar;
-limm 2 polar;
+limm 6 1337; 
+limm 3 1;     
+limm 2 0;    
 add 6 6 6;
 label:
 add 3 2 2;
 cmp 2 18;
-bz end;
+bz 16; 
 
 ;;
 ;
@@ -20,7 +20,7 @@ bz end;
 ;
 
 ;;
-bnz label;
+bnz 3;    
 add 3 2 2;
 add 3 2 2;
 ;
