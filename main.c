@@ -21,6 +21,7 @@ void sigint_handler(int param){
 	if(fpcompiled){
 		fclose(fpcompiled);
 	}
+	remove(TMP_FILE_NAME);
 	exit(-1);
 
 }

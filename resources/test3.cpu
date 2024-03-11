@@ -12,4 +12,5 @@ label:
 add 3 2 2 0 0 0;
 cmp 2 18;
 bz end;
-
+bnz label;
+end:

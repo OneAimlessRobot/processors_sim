@@ -15,4 +15,6 @@
 #define INSTR_FILE_PATH "resources/test1.cpu"
 #define CPU_FILE_PATH "resources/test2.cpu"
 #define PROGRAM_FILE_PATH "resources/test3.cpu"
+#define TMP_FILE_NAME "tmp.tmp"
+
 #endif

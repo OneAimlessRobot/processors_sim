@@ -18,7 +18,6 @@
 
 static u_int32_t code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
 #define MAX_NAMES 1024
-#define TMP_FILE_NAME "tmp.tmp"
 static FILE* fpmid=NULL;
 
 name_code_pair conv_table[]={

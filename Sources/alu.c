@@ -33,13 +33,6 @@ static void process_alu_op(cpu*proc,u_int32_t inst,u_int8_t* reg1,u_int8_t* reg2
 	(*reg2size)|=unprocessed_size2;
 	(*destsize)|=unprocessed_destsize;
 }
-static void finalize_alu_op(cpu*proc,u_int32_t inst){
-	
-	u_int8_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
-	process_alu_op(proc,inst,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,&dstsize);
-	u_int32_t value1=getProcRegValue(proc,alureg1,reg1size),value2=getProcRegValue(proc,alureg2,reg2size);
-
-}
 void add(cpu*proc,u_int32_t inst){
 
 	u_int8_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
