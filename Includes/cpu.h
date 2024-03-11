@@ -2,7 +2,7 @@
 #define CPU_H
 #define REG_FILE_DEF_SIZE 32
 
-typedef enum {FULL,HALF,QUARTER}reg_type;
+typedef enum {NONE,QUARTER,HALF,FULL}reg_type;
 
 typedef enum {ADD=0x10000000,
 		LMEM=0x20000000,
@@ -34,7 +34,9 @@ typedef struct cpu{
 	u_int32_t alu_oper_1_mask,
 			alu_oper_2_mask,
 			alu_dst_mask,
-			alu_op_size_mask;
+			alu_op_size_mask,
+			alu_op2_size_mask,
+			alu_dest_size_mask;
 
 	u_int32_t load_imm_dst_mask,
 			load_imm_oper_mask;
@@ -60,7 +62,7 @@ void loadProg(cpu*proc);
 void endCPU(cpu** processor);
 void printCPU(int fd,cpu* processor);
 void decodeInstruction(cpu*proc,u_int32_t inst);
-u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex);
+u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex,u_int8_t reg_size);
 void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8_t reg_addr);
 void loadMemValue(cpu* proc,u_int8_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr);
 #endif

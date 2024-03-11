@@ -170,7 +170,7 @@ static int32_t get_next_instruction(FILE* fp,char buff[1024]){
 }
 static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 	u_int32_t result=0x0;
-	u_int32_t alu1=0,alu2=0,alu3=0;
+	u_int32_t alu1=0,alu2=0,alu3=0,alu4=0,alu5=0,alu6=0;
 	u_int32_t mem1=0,mem2=0,mem3=0,mem4=0;
 	u_int32_t loadimm_reg=0,loadimm_value=0;
 	u_int32_t cmp_reg=0,cmp_value=0;
@@ -180,7 +180,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 	switch(code){
 	case ADD:
 		
-		if(!sscanf(buff,"%u%u%u",&alu1,&alu2,&alu3)){
+		if(!sscanf(buff,"%u%u%u%u%u%u",&alu1,&alu2,&alu3,&alu4,&alu5,&alu6)){
 			perror("Compiling error!!!!! bad instruction syntax in add!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -188,6 +188,10 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
 		result|=mask_photograph(proc->alu_dst_mask,alu3);
+	
+		result|=mask_photograph(proc->alu_op_size_mask,alu4);
+		result|=mask_photograph(proc->alu_op2_size_mask,alu5);
+		result|=mask_photograph(proc->alu_dest_size_mask,alu6);
 		break;
 	case LMEM:
 		if(!sscanf(buff,"%u%u%u%u",&mem1,&mem2,&mem3,&mem4)){
@@ -201,7 +205,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->mem_size_mask,mem4);
 		break;
 	case SUB:
-		if(!sscanf(buff,"%u%u%u",&alu1,&alu2,&alu3)){
+		if(!sscanf(buff,"%u%u%u%u%u%u",&alu1,&alu2,&alu3,&alu4,&alu5,&alu6)){
 			perror("Compiling error!!!!! bad instruction syntax in sub!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -209,6 +213,10 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
 		result|=mask_photograph(proc->alu_dst_mask,alu3);
+	
+		result|=mask_photograph(proc->alu_op_size_mask,alu4);
+		result|=mask_photograph(proc->alu_op2_size_mask,alu5);
+		result|=mask_photograph(proc->alu_dest_size_mask,alu6);
 		break;
 	case STO:
 		if(!sscanf(buff,"%u%u%u%u",&mem1,&mem2,&mem3,&mem4)){
@@ -231,7 +239,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->load_imm_oper_mask,loadimm_value);
 		break;
 	case AND:
-		if(!sscanf(buff,"%u%u%u",&alu1,&alu2,&alu3)){
+		if(!sscanf(buff,"%u%u%u%u%u%u",&alu1,&alu2,&alu3,&alu4,&alu5,&alu6)){
 			perror("Compiling error!!!!! bad instruction syntax in and!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -239,9 +247,13 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
 		result|=mask_photograph(proc->alu_dst_mask,alu3);
+	
+		result|=mask_photograph(proc->alu_op_size_mask,alu4);
+		result|=mask_photograph(proc->alu_op2_size_mask,alu5);
+		result|=mask_photograph(proc->alu_dest_size_mask,alu6);
 		break;
 	case OR:
-		if(!sscanf(buff,"%u%u%u",&alu1,&alu2,&alu3)){
+		if(!sscanf(buff,"%u%u%u%u%u%u",&alu1,&alu2,&alu3,&alu4,&alu5,&alu6)){
 			perror("Compiling error!!!!! bad instruction syntax in or!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -249,6 +261,10 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->alu_oper_1_mask,alu1);
 		result|=mask_photograph(proc->alu_oper_2_mask,alu2);
 		result|=mask_photograph(proc->alu_dst_mask,alu3);
+	
+		result|=mask_photograph(proc->alu_op_size_mask,alu4);
+		result|=mask_photograph(proc->alu_op2_size_mask,alu5);
+		result|=mask_photograph(proc->alu_dest_size_mask,alu6);
 		break;
 	case JMP:
 		if(!sscanf(buff,"%u",&jmp_addr)){

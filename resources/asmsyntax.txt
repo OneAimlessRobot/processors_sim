@@ -1,7 +1,6 @@
-add reg1 reg2->dstreg
-sub ----------------
-or -----------------
-and ----------------
+alu reg1 reg2 dstreg reg1size reg2size dstregsize
+	reg1 & reg1size op reg2 & reg2size -> dstreg & dstsize 
+
 load reg_dst mem_src
 	reg_dst->mem_src
 

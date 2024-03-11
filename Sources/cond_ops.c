@@ -41,7 +41,7 @@ void cmp(cpu*proc,u_int32_t inst){
 	u_int32_t value;
 	u_int8_t reg;
 	cond_load(proc,inst,&reg,&value);
-	proc->bz_flag=!(getProcRegValue(proc,reg)-value);
+	proc->bz_flag=!(getProcRegValue(proc,reg,FULL)-value);
 }
 void bz(cpu*proc,u_int32_t inst){
 	u_int32_t addr_val;

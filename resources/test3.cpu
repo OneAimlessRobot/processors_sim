@@ -2,42 +2,14 @@
 polar 0;
 ploar 1;
 midgar 1;
-plroa 83886078;
+plroa 83886090;
 .code:
 limm 6 plroa;
 limm 3 midgar;
 limm 2 polar;
-add 6 6 6;
+add 6 6 6 1 1 1;
 label:
-add 3 2 2;
+add 3 2 2 0 0 0;
 cmp 2 18;
 bz end;
 
-;;
-;
-;;
-;
-;
-
-;;
-bnz label;
-add 3 2 2;
-add 3 2 2;
-;
-add 3 2 2;
-add 3 2 2;
-;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-end:
-;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-end:

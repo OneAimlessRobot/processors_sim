@@ -27,13 +27,13 @@ static void process_mem_op(cpu*proc,u_int32_t inst,u_int8_t* reg,u_int8_t*addr_r
 void sto(cpu*proc,u_int32_t inst){
 	u_int8_t memregval,memaddrreg,memregtype;
 	process_mem_op(proc,inst,&memregval,&memaddrreg,&memregtype);
-	u_int32_t value_to_sto=getProcRegValue(proc,memregval);
-	u_int32_t addr=getProcRegValue(proc,memaddrreg);
+	u_int32_t value_to_sto=getProcRegValue(proc,memregval,FULL);
+	u_int32_t addr=getProcRegValue(proc,memaddrreg,FULL);
 	storeValue(proc->mem, addr*WORD_SIZE, WORD_SIZE, (void*)&value_to_sto);
 }
 void load(cpu*proc,u_int32_t inst){
 	u_int8_t memregval,memaddrreg,memregtype;
 	process_mem_op(proc,inst,&memregval,&memaddrreg,&memregtype);
-	u_int32_t addr_to_load=getProcRegValue(proc,memaddrreg);
+	u_int32_t addr_to_load=getProcRegValue(proc,memaddrreg,FULL);
 	loadMemValue(proc,memregval,addr_to_load,memregtype,0);
 }

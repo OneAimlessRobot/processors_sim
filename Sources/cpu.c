@@ -12,9 +12,23 @@
 #include "../Includes/cond_ops.h"
 #include "../Includes/mem_ops.h"
 
-u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex){
-
-	return *(u_int32_t*)(&proc->reg_file[regIndex*WORD_SIZE]);
+u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex,u_int8_t reg_portion_mask){
+	u_int32_t half_word_mask=0x0000FFFF;
+	u_int32_t short_word_mask=0x000000FF;
+	u_int32_t rawvalue=*(u_int32_t*)(&proc->reg_file[regIndex*WORD_SIZE]);
+	if(reg_portion_mask<3&&reg_portion_mask){
+		switch(reg_portion_mask&1){
+			case 1:
+			rawvalue&=short_word_mask;
+			break;
+			case 0:
+			rawvalue&=half_word_mask;
+			break;
+			default:
+			break;
+		}
+	}
+	return rawvalue;
 
 }
 void loadProg(cpu* proc){
@@ -37,7 +51,7 @@ void loadProg(cpu* proc){
 
 void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8_t reg_addr) {
     u_int8_t word_size=WORD_SIZE;
-   base*=word_size;
+   base*=WORD_SIZE;
    switch(type){
     case HALF:
 	reg_addr&=1;
@@ -47,7 +61,7 @@ void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8
 	}
 	break;
     case QUARTER:
-	reg_addr&=0x00000007;
+	reg_addr&=0x00000003;
 	switch(reg_addr){
 	case 1:
 		base+=word_size;
@@ -64,7 +78,6 @@ void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8
 	}
 	break;
     default:
-
 	break;
 
 }
@@ -82,7 +95,7 @@ void loadMemValue(cpu* proc,u_int8_t base,u_int32_t basemem,reg_type type,u_int8
 	}
 	break;
     case QUARTER:
-	reg_addr&=0x00000007;
+	reg_addr&=0x00000003;
 	word_size<<=2;
 	switch(reg_addr){
 	case 1:
@@ -218,18 +231,45 @@ FILE* fp=NULL;
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->alu_oper_1_mask);
 	if(!fscanf(fp,"%x",&proc->alu_oper_2_mask)){
 		fclose(fp);
 		return 0;
 	}
+	
+	dprintf(1,"\n");
+	printWord(1,proc->alu_oper_2_mask);
 	if(!fscanf(fp,"%x",&proc->alu_dst_mask)){
 		fclose(fp);
 		return 0;
 	}
+	
+	dprintf(1,"\n");
+	printWord(1,proc->alu_dst_mask);
 	if(!fscanf(fp,"%x",&proc->alu_op_size_mask)){
 		fclose(fp);
 		return 0;
 	}
+	
+	dprintf(1,"\n");
+	printWord(1,proc->alu_op_size_mask);
+
+	if(!fscanf(fp,"%x",&proc->alu_op2_size_mask)){
+		fclose(fp);
+		return 0;
+	}
+	
+	dprintf(1,"\n");
+	printWord(1,proc->alu_op2_size_mask);
+
+	if(!fscanf(fp,"%x",&proc->alu_dest_size_mask)){
+		fclose(fp);
+		return 0;
+	}
+	
+	dprintf(1,"\n");
+	printWord(1,proc->alu_dest_size_mask);
 
 
 	
@@ -238,43 +278,63 @@ FILE* fp=NULL;
 		fclose(fp);
 		return 0;
 	}
+	
+	dprintf(1,"\n");
+	printWord(1,proc->load_imm_dst_mask);
 	if(!fscanf(fp,"%x",&proc->load_imm_oper_mask)){
 		fclose(fp);
 		return 0;
 	}
 
+	dprintf(1,"\n");
+	printWord(1,proc->load_imm_oper_mask);
 	
 	skip_cpu_comments(fp);
 	if(!fscanf(fp,"%x",&proc->mem_reg_mask)){
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->mem_reg_mask);
 	if(!fscanf(fp,"%x",&proc->mem_addr_reg_mask)){
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->mem_addr_reg_mask);
 	if(!fscanf(fp,"%x",&proc->mem_reg_type_mask)){
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->mem_reg_type_mask);
 	if(!fscanf(fp,"%x",&proc->mem_size_mask)){
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->mem_size_mask);
 	skip_cpu_comments(fp);
 	if(!fscanf(fp,"%x",&proc->jmp_addr_mask)){
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->jmp_addr_mask);
 	skip_cpu_comments(fp);
 	if(!fscanf(fp,"%x",&proc->cmp_reg_mask)){
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->cmp_reg_mask);
 	if(!fscanf(fp,"%x",&proc->cmp_value_mask)){
 		fclose(fp);
 		return 0;
 	}
+	dprintf(1,"\n");
+	printWord(1,proc->cmp_value_mask);
+	dprintf(1,"\n");
 	fclose(fp);
 	return 1;
 
@@ -307,8 +367,8 @@ static void printCPURegs(int fd,cpu* processor){
 
        dprintf(fd,"State of the registers:\nSize: %u\n",processor->reg_file_size);
         for(u_int8_t i=0;i<processor->reg_file_size/WORD_SIZE;i++){
-        	dprintf(fd,"Reg %u: Value: %u [",i,getProcRegValue(processor,i));
-	        printWord(fd, getProcRegValue(processor,i));
+        	dprintf(fd,"Reg %u: Value: %u [",i,getProcRegValue(processor,i,FULL));
+	        printWord(fd, getProcRegValue(processor,i,FULL));
 		dprintf(fd,"]\n");
         }
 
