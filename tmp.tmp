@@ -4,14 +4,14 @@ ploar 1;
 midgar 1;
 plroa 83886078;
 .code:
-limm 6 plroa;
-limm 3 midgar;
-limm 2 polar;
-add 6 6 6;
+                             limm 6 83886078;
+                       limm 3 1;
+                      limm 2 0;
+                    add 6 6 6;
 label:
-add 3 2 2;
-cmp 2 18;
-bz end;
+                    add 3 2 2;
+                  cmp 2 18;
+              bz 16;
 
 ;;
 ;
@@ -20,24 +20,24 @@ bz end;
 ;
 
 ;;
-bnz label;
-add 3 2 2;
-add 3 2 2;
+                    bnz 3;
+                    add 3 2 2;
+                    add 3 2 2;
 ;
-add 3 2 2;
-add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
 ;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
 end:
 ;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
-add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
+                    add 3 2 2;
 end:

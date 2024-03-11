@@ -64,7 +64,7 @@ static int strings_are_equal(char* str1,char* str2){
 
 }
 
-static name_addr_pair* find_in_label_table(name_addr_pair table[],char* string){
+static name_addr_pair* find_in_label_table(char* string){
 	if(!string){
 		printf("null string in compiler curr label finder!!!!\n");
 		return NULL;
@@ -73,11 +73,11 @@ static name_addr_pair* find_in_label_table(name_addr_pair table[],char* string){
 		printf("empty string in compiler curr label finder!!!!\n");
 		return NULL;
 	}
-	for(int i=0;table[i].string;i++){
+	for(int i=0;avail_labels[i].string;i++){
 		
-		if(strings_are_equal(table[i].string,string)){
-		printf("label %s %u found!!! label finder!!!!\n",table[i].string,table[i].addr);
-			return &table[i];
+		if(strings_are_equal(avail_labels[i].string,string)){
+		printf("label %s %u found!!! label finder!!!!\n",avail_labels[i].string,avail_labels[i].addr);
+			return &avail_labels[i];
 		}
 
 	}
@@ -85,7 +85,7 @@ static name_addr_pair* find_in_label_table(name_addr_pair table[],char* string){
 
 
 }
-static name_addr_value_triple* find_in_var_table(name_addr_value_triple table[],char* string){
+static name_addr_value_triple* find_in_var_table(char* string){
 	if(!string){
 		printf("null string in compiler curr var finder!!!!\n");
 		return NULL;
@@ -94,11 +94,11 @@ static name_addr_value_triple* find_in_var_table(name_addr_value_triple table[],
 		printf("empty string in compiler curr var finder!!!!\n");
 		return NULL;
 	}
-	for(int i=0;table[i].string;i++){
+	for(int i=0;avail_names[i].string;i++){
 		
-		if(strings_are_equal(table[i].string,string)){
-		printf("var %s %u %d found!!! var finder!!!!\n",table[i].string,table[i].value,table[i].addr);
-			return &table[i];
+		if(strings_are_equal(avail_names[i].string,string)){
+		printf("var %s %u %d found!!! var finder!!!!\n",avail_names[i].string,avail_names[i].value,avail_names[i].addr);
+			return &avail_names[i];
 		}
 
 	}
@@ -106,7 +106,7 @@ static name_addr_value_triple* find_in_var_table(name_addr_value_triple table[],
 
 
 }
-static u_int32_t find_in_conv_table(name_code_pair table[],char* string){
+static u_int32_t find_in_conv_table(char* string){
 	if(!string){
 		printf("null string in compiler instruction finder!!!!\n");
 		return 0;
@@ -115,11 +115,11 @@ static u_int32_t find_in_conv_table(name_code_pair table[],char* string){
 		printf("empty string in compiler instruction finder!!!!\n");
 		return 0;
 	}
-	for(int i=0;table[i].string;i++){
+	for(int i=0;conv_table[i].string;i++){
 		
-		if(strings_are_equal(table[i].string,string)){
-			dprintf(1,"%x instruction found!!!!!\n",table[i].code);
-			return table[i].code;
+		if(strings_are_equal(conv_table[i].string,string)){
+			dprintf(1,"%x instruction found!!!!!\n",conv_table[i].code);
+			return conv_table[i].code;
 		}
 
 	}
@@ -298,13 +298,51 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 	return result;
 
 }
+//Powered by chatgpt
+
+static void emplaceString(FILE* fp,char* string,int newstrsize,int whitespacelength,int instr_pos){
+// Calculate the end position of the file
+fseek(fp, 0, SEEK_END);
+int end = ftell(fp);
+
+// Calculate the position after inserting new instruction
+int pos = instr_pos + whitespacelength;
+
+// Calculate the size of the content after the insertion point
+int size = end - pos;
+
+// Allocate memory for content after the insertion point
+char auxil[size];
+
+// Read content after insertion point
+fseek(fp, pos, SEEK_SET);
+fread(auxil, 1, size, fp);
+
+// Write whitespace to replace old instruction
+fseek(fp, instr_pos, SEEK_SET);
+char whitespace[whitespacelength];
+memset(whitespace, ' ', whitespacelength);
+fwrite(whitespace, 1, whitespacelength, fp);
+
+// Write new instruction
+fwrite(string, 1, newstrsize, fp);
+
+// Write content after insertion point
+int pos2 = ftell(fp);
+fwrite(auxil, 1, size, fp);
+
+// Move file pointer to correct position
+fseek(fp, pos2, SEEK_SET);
+
+
+}
 static u_int32_t process_instruction(cpu*proc,char buff[1024]){
 	char* ptr=buff;
 	char inst_name[1024]={0};
 	int num_consumed=0;
 	sscanf(ptr,"%s%n",inst_name,&num_consumed);
 	ptr+=num_consumed;
-	u_int32_t code=find_in_conv_table(conv_table,inst_name);
+	u_int32_t code=find_in_conv_table(inst_name);
 	return decypher_instruction(proc,code,ptr);
 
 }
@@ -341,11 +379,11 @@ void substitute_vars(int instr_pos,char buff[1024]){
 	}
 		name_addr_value_triple* trip=NULL;
 		
-		if(ntokens==1&&!find_in_conv_table(conv_table,curr_token)){
+		if(ntokens==1&&!find_in_conv_table(curr_token)){
 				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
 				raise(SIGINT);
 		}
-		if((trip=find_in_var_table(avail_names,curr_token))){
+		if((trip=find_in_var_table(curr_token))){
 			ptr+=snprintf(ptr,128,"%d ",trip->value);
 
 		}
@@ -362,28 +400,11 @@ void substitute_vars(int instr_pos,char buff[1024]){
 		old_buff_ptr+=subst_cursor;
 		memset(curr_token,0,128);
 	}
-	fseek(fpmid,instr_pos,SEEK_SET);
-	char whitespace[curr_str_len];
-	fclose(fpmid);
-if(!(fpmid=fopen(TMP_FILE_NAME,"r+"))){
-                 perror("Error opening tmp file wh\n");
-                 raise(SIGINT);
+	
+	emplaceString(fpmid, newInstr,strlen(newInstr),curr_str_len,instr_pos);
+
 }
-	int pos=instr_pos+curr_str_len;
-	fseek(fpmid,pos,SEEK_SET);
-	int end=fseek(fpmid,0,SEEK_END);
-	fseek(fpmid,pos,SEEK_SET);
-	printf("%djjjj%d\n",end,pos);
-	int size=end-pos;
-	char auxil[size];
-	fread(auxil,1,size,fpmid);
-	fseek(fpmid,instr_pos,SEEK_SET);
-	memset(whitespace,' ',curr_str_len);
-	fwrite(whitespace,1,curr_str_len,fpmid);
-	fseek(fpmid,instr_pos,SEEK_SET);
-	fwrite(newInstr,1,strlen(newInstr),fpmid);
-	fwrite(auxil,1,size,fpmid);
-}
+
 void substitute_labels(int instr_pos,char buff[1024]){
 	
 	int curr_str_len=strlen(buff);
@@ -417,11 +438,11 @@ void substitute_labels(int instr_pos,char buff[1024]){
 	}
 		name_addr_pair* trip=NULL;
 		
-		if(ntokens==1&&!find_in_conv_table(conv_table,curr_token)){
+		if(ntokens==1&&!find_in_conv_table(curr_token)){
 				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
 				raise(SIGINT);
 		}
-		if((trip=find_in_label_table(avail_labels,curr_token))){
+		if((trip=find_in_label_table(curr_token))){
 			ptr+=snprintf(ptr,128,"%d ",trip->addr);
 
 		}
@@ -437,12 +458,7 @@ void substitute_labels(int instr_pos,char buff[1024]){
 		old_buff_ptr+=subst_cursor;
 		memset(curr_token,0,128);
 	}
-	fseek(fpmid,instr_pos,SEEK_SET);
-	char whitespace[curr_str_len];
-	memset(whitespace,' ',curr_str_len);
-	fwrite(whitespace,1,curr_str_len,fpmid);
-	fseek(fpmid,instr_pos,SEEK_SET);
-	fwrite(newInstr,1,strlen(newInstr),fpmid);
+	emplaceString(fpmid, newInstr,strlen(newInstr),curr_str_len,instr_pos);
 
 }
 
