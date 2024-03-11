@@ -6,19 +6,19 @@
 F0000000
 
 //alu masks: first oper reg,sec oper reg, dst reg, reg type
-0FF00000
-000FF000
-00000FF0
+0F800000
+007C0000
+0003E000
 00000003
 
 
 //load immedite masks: dest reg, value
-0FF00000
-000FFFFF
+0F800000
+007FFFFF
 	
 //memory op masks: reg with value(store)/ dest reg(load); reg with addres(load and store); reg types
-0FF00000
-000FF000
+0F800000
+007C0000
 00000030
 00000003
 
@@ -26,5 +26,5 @@ F0000000
 0FFFFFFF
 
 //cmp masks: reg to compare, value to compare 
-0FF00000
-000FFFFF
+0F800000
+007FFFFF

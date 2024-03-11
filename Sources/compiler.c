@@ -364,11 +364,25 @@ void substitute_vars(int instr_pos,char buff[1024]){
 	}
 	fseek(fpmid,instr_pos,SEEK_SET);
 	char whitespace[curr_str_len];
+	fclose(fpmid);
+if(!(fpmid=fopen(TMP_FILE_NAME,"r+"))){
+                 perror("Error opening tmp file wh\n");
+                 raise(SIGINT);
+}
+	int pos=instr_pos+curr_str_len;
+	fseek(fpmid,pos,SEEK_SET);
+	int end=fseek(fpmid,0,SEEK_END);
+	fseek(fpmid,pos,SEEK_SET);
+	printf("%djjjj%d\n",end,pos);
+	int size=end-pos;
+	char auxil[size];
+	fread(auxil,1,size,fpmid);
+	fseek(fpmid,instr_pos,SEEK_SET);
 	memset(whitespace,' ',curr_str_len);
 	fwrite(whitespace,1,curr_str_len,fpmid);
 	fseek(fpmid,instr_pos,SEEK_SET);
 	fwrite(newInstr,1,strlen(newInstr),fpmid);
-
+	fwrite(auxil,1,size,fpmid);
 }
 void substitute_labels(int instr_pos,char buff[1024]){
 	
