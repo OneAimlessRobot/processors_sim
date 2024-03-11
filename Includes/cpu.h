@@ -19,10 +19,11 @@ typedef enum {ADD=0x10000000,
 			}op_code;
 
 #define OP_CODE_MASK 0xF0000000
-typedef struct context{
-	u_int32_t proc_start,proc_end;
+typedef struct reg_window{
 
-}context;
+	u_int32_t win_start,win_size;
+
+}reg_window;
 typedef struct cpu{
 
 	u_int8_t* reg_file;
@@ -51,18 +52,18 @@ typedef struct cpu{
 	
 	u_int32_t cmp_reg_mask,
 			cmp_value_mask;
+	
+	reg_window* wins;
+	
+	u_int8_t curr_wp;
 
-	context process;
+
 }cpu;
-
-
-void switchOnCPU(cpu*proc);
-cpu* spawnCPU(memory*mem);
-void loadProg(cpu*proc);
-void endCPU(cpu** processor);
-void printCPU(int fd,cpu* processor);
+int load_cpu_masks(cpu*proc);
+void execute(cpu*proc,u_int32_t inst);
 void decodeInstruction(cpu*proc,u_int32_t inst);
-u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex,u_int8_t reg_size);
-void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8_t reg_addr);
-void loadMemValue(cpu* proc,u_int8_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr);
+u_int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_size);
+void storeValueReg(cpu* proc, u_int32_t base,reg_type type,u_int32_t value,u_int8_t reg_addr);
+void loadMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr);
+void storeMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr);
 #endif

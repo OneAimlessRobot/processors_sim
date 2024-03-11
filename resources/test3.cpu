@@ -1,16 +1,78 @@
-.data:
-polar 0;
-ploar 1;
-midgar 1;
-plroa 83886090;
-.code:
-limm 6 plroa;
-limm 3 midgar;
-limm 2 polar;
-add 6 6 6 1 1 1;
-label:
-add 3 2 2 0 0 0;
-cmp 2 18;
-bz end;
-bnz label;
+     .data:
+value1 10;
+value 1;
+value3 11221212121212;
+value2 30;
+result 50;
+
+        
+
+
+
+
+
+
+  
+ .code:
+    //Load values into registers;
+    
+    limm 1 value1;
+    limm 0 69;
+    limm 4 1;
+ 
+ 
+ 
+limm 2 value2;
+  
+ 
+       limm 5 result;
+    add 0 0 0 1 1 1;
+   
+ 
+ 
+    //Perform addition;
+ 
+ 
+ 
+     add 1 2 3 1 1 1 ;
+ 
+ 
+ 
+
+    //Store the result in memory;
+    store value 5 0 2;
+
+    //Compare the result with a threshold;
+cmparison:
+    cmp 3 30;
+    //Branch if zero
+
+
+	;
+    bz 100;
+    //Subtract one from the result
+
+
+	;
+    sub 3 4 3 0 0 0 ;
+
+    //Branch back to the comparison;
+    jmp cmparison;
+
+100:
+    limm 3 0;
+    limm 1 1;
+    jmp collision;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+    add 1 1 1 0 0 0;
+collision:
+
 end:

@@ -173,9 +173,9 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 	u_int32_t mem1=0,mem2=0,mem3=0,mem4=0;
 	u_int32_t loadimm_reg=0,loadimm_value=0;
 	u_int32_t cmp_reg=0,cmp_value=0;
-	u_int32_t jmp_addr=0;
-	u_int32_t bzero_addr=0;
-	u_int32_t ret_off=0;
+	int16_t jmp_addr=0;
+	int16_t bzero_addr=0;
+	int16_t ret_off=0;
 	switch(code){
 	case ADD:
 		
@@ -266,7 +266,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->alu_dest_size_mask,alu6);
 		break;
 	case JMP:
-		if(!sscanf(buff,"%u",&jmp_addr)){
+		if(!sscanf(buff,"%hd",&jmp_addr)){
 			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -274,7 +274,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->jmp_addr_mask,jmp_addr);
 		break;
 	case RET:
-		if(!sscanf(buff,"%u",&ret_off)){
+		if(!sscanf(buff,"%hd",&ret_off)){
 			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -291,7 +291,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->cmp_value_mask,cmp_value);
 		break;
 	case BZERO:
-		if(!sscanf(buff,"%u",&bzero_addr)){
+		if(!sscanf(buff,"%hd",&bzero_addr)){
 			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -299,7 +299,7 @@ static u_int32_t decypher_instruction(cpu*proc,u_int32_t code,char* buff){
 		result|=mask_photograph(proc->jmp_addr_mask,bzero_addr);
 		break;
 	case BNZERO:
-		if(!sscanf(buff,"%u",&bzero_addr)){
+		if(!sscanf(buff,"%hd",&bzero_addr)){
 			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -420,7 +420,7 @@ void substitute_vars(int instr_pos,char buff[1024]){
 
 }
 
-void substitute_labels(int instr_pos,char buff[1024]){
+void substitute_labels(int instr_pos,char buff[1024],u_int32_t num){
 	
 	int curr_str_len=strlen(buff);
 	if(!curr_str_len){
@@ -458,7 +458,7 @@ void substitute_labels(int instr_pos,char buff[1024]){
 				raise(SIGINT);
 		}
 		if((trip=find_in_label_table(curr_token))){
-			ptr+=snprintf(ptr,128,"%d ",trip->addr);
+			ptr+=snprintf(ptr,128,"%d ",trip->addr-num);
 
 		}
 		else{
@@ -517,12 +517,12 @@ u_int32_t instr_buff_is_space(char buff[1024]){
 void substitute_all_vars(void){
 	char buff[1024];
 	while(1){
+	if(feof(fpmid)||ferror(fpmid)){
+		break;
+	}
 	int instr_pos=get_next_instruction(fpmid,buff);
 	if(instr_buff_is_space(buff)){
 	continue;
-	}
-	if(feof(fpmid)||ferror(fpmid)){
-		break;
 	}
 	substitute_vars(instr_pos,buff);
 	}
@@ -531,12 +531,12 @@ void substitute_all_vars(void){
 void get_all_labels(void){
 	char buff[1024];
 	while(1){
+	if(feof(fpmid)||ferror(fpmid)){
+		break;
+	}
 	get_next_instruction(fpmid,buff);
 	if(instr_buff_is_space(buff)){
 		continue;
-	}
-	if(feof(fpmid)||ferror(fpmid)){
-		break;
 	}
 	if(buff[strlen(buff)-1]==':'){
 		buff[strlen(buff)-1]=0;
@@ -558,17 +558,20 @@ void get_all_labels(void){
 }
 void substitute_all_labels(void){
 	char buff[1024];
+	int num=0;
 	while(1){
+	if(feof(fpmid)||ferror(fpmid)){
+		break;
+	}
 	int instr_pos=get_next_instruction(fpmid,buff);
 	if(instr_buff_is_space(buff)){
 
 		continue;
 	}
-	if(feof(fpmid)||ferror(fpmid)){
-		break;
+	substitute_labels(instr_pos,buff,num);
+	num++;
 	}
-	substitute_labels(instr_pos,buff);
-	}
+
 	
 }
 void copyInputFile(FILE* fpin){
@@ -582,6 +585,8 @@ void copyInputFile(FILE* fpin){
 }
 void compile(cpu*proc,FILE* fpin,FILE* fpout){
 	u_int32_t num_of_inst=0;
+
+	//remove(TMP_FILE_NAME);
 	if(!(fpmid=fopen(TMP_FILE_NAME,"w"))){
 		perror("Error opening tmp file while compiling!!!!\n");
 		return;
@@ -631,5 +636,4 @@ void compile(cpu*proc,FILE* fpin,FILE* fpout){
 		
 	}
 	fclose(fpmid);
-	remove(TMP_FILE_NAME);
 }

@@ -3,8 +3,10 @@
 #include "Includes/cpu.h"
 #include "Includes/alu.h"
 #include "Includes/compiler.h"
+#include "Includes/os.h"
 cpu* proc=NULL;
 memory* mem=NULL;
+context* ctx=NULL;
 FILE* fpcode=NULL;
 FILE* fpcompiled=NULL;
 void sigint_handler(int param){
@@ -14,6 +16,9 @@ void sigint_handler(int param){
 	}
 	if(mem){
 		endMemory(&mem);
+	}
+	if(ctx){
+		endCtx(&ctx);
 	}
 	if(fpcode){
 		fclose(fpcode);
@@ -50,8 +55,10 @@ int main(int argc, char ** argv){
 		perror("Invalid file path!!!\n");
 		raise(SIGINT);
 	}
-	initMemory(fpcompiled,mem);
-	loadProg(proc);
-	switchOnCPU(proc);
+	ctx=spawnCtx(proc,1,6,5,20);
+	
+	loadProg(fpcompiled,proc,ctx);
+	printMemory(1,proc->mem);
+	switchOnCPU(proc,ctx);
 	raise(SIGINT);
 }

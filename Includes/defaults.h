@@ -4,7 +4,7 @@
 #define BYTE_BITS 8
 #define WORD_SIZE sizeof(u_int32_t)
 #define WORD_BITS (BYTE_BITS*WORD_SIZE)
-#define MEM_WORDS 50
+#define MEM_WORDS 100
 #define MEM_DEF_SIZE (WORD_SIZE*MEM_WORDS)
 
 //load imm masks
@@ -17,4 +17,5 @@
 #define PROGRAM_FILE_PATH "resources/test3.cpu"
 #define TMP_FILE_NAME "tmp.tmp"
 
+#define MAX_NUM_OF_WINDOWS 100
 #endif

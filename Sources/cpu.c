@@ -12,7 +12,7 @@
 #include "../Includes/cond_ops.h"
 #include "../Includes/mem_ops.h"
 
-u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex,u_int8_t reg_portion_mask){
+u_int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_portion_mask){
 	u_int32_t half_word_mask=0x0000FFFF;
 	u_int32_t short_word_mask=0x000000FF;
 	u_int32_t rawvalue=*(u_int32_t*)(&proc->reg_file[regIndex*WORD_SIZE]);
@@ -31,37 +31,21 @@ u_int32_t getProcRegValue(cpu* proc,u_int8_t regIndex,u_int8_t reg_portion_mask)
 	return rawvalue;
 
 }
-void loadProg(cpu* proc){
-	u_int32_t value;
-	u_int32_t curr_cell=0;
-	proc->process.proc_start|=0;
-	loadValue(proc->mem,proc->process.proc_start*WORD_SIZE,WORD_SIZE,(void*)&value);
-	curr_cell++;
-	while((curr_cell<(proc->mem->size/WORD_SIZE))){
-		loadValue(proc->mem,curr_cell*WORD_SIZE,WORD_SIZE,(void*)&value);
-		curr_cell++;
-		if(!value){
-			break;
-		}
-	}
-	proc->process.proc_end|=curr_cell;
-
-
-}
-
-void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8_t reg_addr) {
-    u_int8_t word_size=WORD_SIZE;
-   base*=WORD_SIZE;
+static u_int8_t calculateAddr(u_int32_t*baseaddr,reg_type type,u_int8_t reg_addr){
+u_int8_t word_size=WORD_SIZE;
+   (*baseaddr)*=WORD_SIZE;
+   u_int32_t base =*baseaddr;
    switch(type){
     case HALF:
 	reg_addr&=1;
-	word_size<<=1;
+	word_size>>=1;
 	if(reg_addr){
 	base+=word_size;
 	}
 	break;
     case QUARTER:
 	reg_addr&=0x00000003;
+	word_size>>=2;
 	switch(reg_addr){
 	case 1:
 		base+=word_size;
@@ -78,47 +62,28 @@ void storeValueReg(cpu* proc, u_int8_t base,reg_type type,u_int32_t value,u_int8
 	}
 	break;
     default:
+	
 	break;
 
 }
+	(*baseaddr)=base;
+	return word_size;
+}
+void storeValueReg(cpu* proc, u_int32_t base,reg_type type,u_int32_t value,u_int8_t reg_addr) {
+ 
+u_int8_t word_size=calculateAddr(&base,type,reg_addr);
 	memcpy(proc->reg_file + base, &value, word_size);
 }
-void loadMemValue(cpu* proc,u_int8_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr){
-   u_int8_t word_size=WORD_SIZE;
-   base*=word_size;
-   switch(type){
-    case HALF:
-	reg_addr&=1;
-	word_size<<=1;
-	if(reg_addr){
-	base+=word_size;
-	}
-	break;
-    case QUARTER:
-	reg_addr&=0x00000003;
-	word_size<<=2;
-	switch(reg_addr){
-	case 1:
-		base+=word_size;
-		break;
-	
-	case 2:
-		base+=word_size+word_size;
-		break;
-	case 3:
-		base+=word_size+word_size+word_size;
-		break;
-	default:
-		break;
-	}
-	break;
-    default:
-	
-	break;
+void loadMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr){
+   u_int8_t word_size=calculateAddr(&base,type,reg_addr);
+   calculateAddr(&basemem,type,reg_addr);
+   memcpy(proc->reg_file + base,proc->mem->contents + basemem, word_size);
 
 }
- 	dprintf(1,"Endereço fonte: %u\nEndereço registo alvo: %u\n",(basemem*word_size),base);
-       memcpy(proc->reg_file + base,proc->mem->contents + (basemem*word_size), word_size);
+void storeMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr){
+   u_int8_t word_size=calculateAddr(&base,type,reg_addr);
+   calculateAddr(&basemem,type,reg_addr);
+       memcpy(proc->mem->contents + (basemem),proc->reg_file + base, word_size);
 
 }
 static void load_imm(cpu*proc,u_int32_t inst){
@@ -129,7 +94,7 @@ static void load_imm(cpu*proc,u_int32_t inst){
 	dest|=unprocessed_dest;
 	storeValueReg(proc,dest,FULL,value,0);
 }
-static void execute(cpu*proc,u_int32_t inst){
+void execute(cpu*proc,u_int32_t inst){
 	op_code code=inst&proc->op_code_mask;
 	switch(code){
 		case ADD:
@@ -169,15 +134,15 @@ static void execute(cpu*proc,u_int32_t inst){
 			ret(proc,inst);
 			break;
 		case CMP:
-			dprintf(1,"Ret!\n");
+			dprintf(1,"Cmp!\n");
 			cmp(proc,inst);
 			break;
 		case BZERO:
-			dprintf(1,"Ret!\n");
+			dprintf(1,"bzero!\n");
 			bz(proc,inst);
 			break;
 		case BNZERO:
-			dprintf(1,"Ret!\n");
+			dprintf(1,"bnzero!\n");
 			bnz(proc,inst);
 			break;
 		default:
@@ -186,25 +151,13 @@ static void execute(cpu*proc,u_int32_t inst){
 
 
 	}
+	
 	proc->curr_pc++;
-
-
-}
-
-void switchOnCPU(cpu*proc){
-	proc->curr_pc=proc->process.proc_start;
-	while((proc->curr_pc<proc->process.proc_end)){
-		u_int32_t value=0;
-		loadValue(proc->mem,proc->curr_pc*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
-		execute(proc,value);
-		dprintf(1,"\e[2J");
-		printCPU(1,proc);
-		dprintf(1,"Press enter!\n");
-		getchar();
-	}
+	
 
 }
-static int load_cpu_masks(cpu*proc){
+
+int load_cpu_masks(cpu*proc){
 FILE* fp=NULL;
 	if(!(fp=fopen(CPU_FILE_PATH,"r"))){
 
@@ -339,44 +292,3 @@ FILE* fp=NULL;
 	return 1;
 
 }
-cpu* spawnCPU(memory*mem){
-        cpu* result= malloc(sizeof(cpu));
-        result->mem=mem;
-	result->process.proc_start=0;
-	result->process.proc_end=0;
-        result->curr_pc=0;
-	result->prev_pc=0;
-	result->bz_flag=0;
-	if(!load_cpu_masks(result)){
-
-		result->mem=NULL;
-		endCPU(&result);
-	}
-	result->reg_file= (u_int8_t*)malloc(result->reg_file_size);
-        memset(result->reg_file,0,result->reg_file_size);
-        return result;
-}
-//does not free mem
-void endCPU(cpu** processor){
-        free((*processor)->reg_file);
-        free(*processor);
-        *processor=NULL;
-
-}
-static void printCPURegs(int fd,cpu* processor){
-
-       dprintf(fd,"State of the registers:\nSize: %u\n",processor->reg_file_size);
-        for(u_int8_t i=0;i<processor->reg_file_size/WORD_SIZE;i++){
-        	dprintf(fd,"Reg %u: Value: %u [",i,getProcRegValue(processor,i,FULL));
-	        printWord(fd, getProcRegValue(processor,i,FULL));
-		dprintf(fd,"]\n");
-        }
-
-
-}
-void printCPU(int fd,cpu* processor){
-	dprintf(fd,"\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
-	printCPURegs(fd,processor);
-	dprintf(fd,"\nPC: %u\nPrev. PC: %u\nZero flag: %u\ncontext start: %u\ncontext end: %u\n",processor->curr_pc,processor->prev_pc,processor->bz_flag,processor->process.proc_start,processor->process.proc_end);
-}
-

@@ -9,9 +9,9 @@
 #include "../Includes/cpu.h"
 #include "../Includes/cond_ops.h"
 
-static void process_cond_op(cpu*proc,u_int32_t inst,u_int32_t* addr){
+static void process_cond_op(cpu*proc,u_int32_t inst,int16_t* addr){
 	*addr=0;;
-	u_int32_t unprocessed_addr=inst&proc->jmp_addr_mask;
+	int16_t unprocessed_addr=inst&proc->jmp_addr_mask;
 	unprocessed_addr>>=firstBitOne(proc->jmp_addr_mask);
 	(*addr)|=unprocessed_addr;
 }
@@ -26,13 +26,13 @@ static void cond_load(cpu*proc,u_int32_t inst,u_int8_t* reg,u_int32_t* value){
 }
 
 void jmp(cpu*proc,u_int32_t inst){
-	u_int32_t addr_val;
+	int16_t addr_val;
 	proc->prev_pc=proc->curr_pc;
 	process_cond_op(proc,inst,&addr_val);
-	proc->curr_pc=addr_val;
+	proc->curr_pc+=(int16_t)addr_val;
 }
 void ret(cpu*proc,u_int32_t inst){
-	u_int32_t addr_val;
+	int16_t addr_val;
 	process_cond_op(proc,inst,&addr_val);
 	proc->curr_pc=proc->prev_pc+addr_val;
 	proc->prev_pc=proc->curr_pc;
@@ -44,7 +44,7 @@ void cmp(cpu*proc,u_int32_t inst){
 	proc->bz_flag=!(getProcRegValue(proc,reg,FULL)-value);
 }
 void bz(cpu*proc,u_int32_t inst){
-	u_int32_t addr_val;
+	int16_t addr_val;
 	process_cond_op(proc,inst,&addr_val);
 	
 	switch(proc->bz_flag){
@@ -52,19 +52,19 @@ void bz(cpu*proc,u_int32_t inst){
 			break;
 		default:
 			proc->prev_pc=proc->curr_pc;
-			proc->curr_pc=addr_val;
+			proc->curr_pc+=(int16_t)addr_val;
 			break;
 
 	}
 }
 void bnz(cpu*proc,u_int32_t inst){
-	u_int32_t addr_val;
+	int16_t addr_val;
 	process_cond_op(proc,inst,&addr_val);
 	
 	switch(proc->bz_flag){
 		case 0:
 			proc->prev_pc=proc->curr_pc;
-			proc->curr_pc=addr_val;
+			proc->curr_pc+=(int16_t)addr_val;
 			break;
 		default:
 			break;

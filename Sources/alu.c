@@ -9,7 +9,7 @@
 #include "../Includes/cpu.h"
 #include "../Includes/alu.h"
 
-static void process_alu_op(cpu*proc,u_int32_t inst,u_int8_t* reg1,u_int8_t* reg2, u_int8_t* dest,u_int8_t* reg1size,u_int8_t* reg2size, u_int8_t* destsize){
+static void process_alu_op(cpu*proc,u_int32_t inst,u_int32_t* reg1,u_int32_t* reg2, u_int32_t* dest,u_int32_t* reg1size,u_int32_t* reg2size, u_int32_t* destsize){
 
 	*reg1=0,*reg2=0,*dest=0;
 	*reg1size=0,*reg2size=0,*destsize=0;
@@ -35,7 +35,7 @@ static void process_alu_op(cpu*proc,u_int32_t inst,u_int8_t* reg1,u_int8_t* reg2
 }
 void add(cpu*proc,u_int32_t inst){
 
-	u_int8_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
+	u_int32_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
 	process_alu_op(proc,inst,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,&dstsize);
 	u_int32_t value1=getProcRegValue(proc,alureg1,reg1size),value2=getProcRegValue(proc,alureg2,reg2size);
 	storeValueReg(proc,aludstreg,dstsize,value1+value2,0);
@@ -43,21 +43,21 @@ void add(cpu*proc,u_int32_t inst){
 void sub(cpu*proc,u_int32_t inst){
 
 
-	u_int8_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
+	u_int32_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
 	process_alu_op(proc,inst,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,&dstsize);
 	u_int32_t value1=getProcRegValue(proc,alureg1,reg1size),value2=getProcRegValue(proc,alureg2,reg2size);
 	storeValueReg(proc,aludstreg,dstsize,value1-value2,0);
 }
 void or(cpu*proc,u_int32_t inst){
 
-	u_int8_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
+	u_int32_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
 	process_alu_op(proc,inst,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,&dstsize);
 	u_int32_t value1=getProcRegValue(proc,alureg1,reg1size),value2=getProcRegValue(proc,alureg2,reg2size);
 	storeValueReg(proc,aludstreg,dstsize,value1|value2,0);
 }
 void and(cpu*proc,u_int32_t inst){
 
-	u_int8_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
+	u_int32_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
 	process_alu_op(proc,inst,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,&dstsize);
 	u_int32_t value1=getProcRegValue(proc,alureg1,reg1size),value2=getProcRegValue(proc,alureg2,reg2size);
 	storeValueReg(proc,aludstreg,dstsize,value1&value2,0);
