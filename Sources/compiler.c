@@ -233,17 +233,12 @@ void substitute_names(symbol table[],int instr_pos,char buff[1024],u_int32_t num
 	if(sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor)>0){
 		ntokens++;
 	}if(!strlen(curr_token)){
-
+		newInstr[strlen(newInstr)]='\n';
 		break;
 	}
-	int putsemicolon=0;
-	if(curr_token[strlen(curr_token)-1]==';'){
-		putsemicolon=1;
-		curr_token[strlen(curr_token)-1]=0;
-	}
-	else if(curr_token[strlen(curr_token)-1]==':'){
+	
+	if(curr_token[strlen(curr_token)-1]==':'){
 
-		curr_token[strlen(curr_token)-1]=0;
 		return;
 	}
 		symbol* trip=NULL;
@@ -267,11 +262,7 @@ void substitute_names(symbol table[],int instr_pos,char buff[1024],u_int32_t num
 			ptr+=snprintf(ptr,128,"%s ",curr_token);
 
 		}
-			if(putsemicolon){
-			ptr[-1]=';';
-				break;
-			}
-
+	
 		old_buff_ptr+=subst_cursor;
 		memset(curr_token,0,128);
 	}
@@ -311,7 +302,7 @@ void process_data(char buff[1024]){
 }
 u_int32_t instr_buff_is_space(char buff[1024]){
 	u_int32_t result=1;
-	for(int i=0;(buff[i]!=';')&&(buff[i]!=':');i++){
+	for(int i=0;(buff[i]!=';')&&(buff[i]!=':')&&(buff[i]!='\n');i++){
 		result=(result&&isspace(buff[i]));
 	}
 	return result;

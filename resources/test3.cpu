@@ -10,22 +10,19 @@ result 50;
   
 .code:
 
-shhshshsshshshahaajajsj
-ahahsjsj
-shshsjsj
     //Load values into registers;
     
-    limm 1 value1;
-    limm 0 69;
-    limm 4 1;
+    limm 1 value1
+    limm 0 69
+    limm 4 1
  
  
  
-limm 2 value2;
+limm 2 value2
   
  
-       limm 5 result;
-    add 0 0 0 2 2 2;
+       limm 5 result
+    add 0 0 0 2 2 2
    
  
  
@@ -33,45 +30,45 @@ limm 2 value2;
  
  
  
-     add 1 2 3 2 2 2 ;
+     add 1 2 3 2 2 2
  
  
  
 
     //Store the result in memory;
-    store value 5 0 2;
+    store value 5 0 2
 
     //Compare the result with a threshold;
 cmparison:
-    cmp 3 30;
+    cmp 3 30
     //Branch if zero
 
 
 	;
-    bz 100;
+    bz 100
     //Subtract one from the result
 
 
 	;
-    sub 3 4 3 0 0 0 ;
+    sub 3 4 3 0 0 0
 
     //Branch back to the comparison;
-    jmp cmparison;
+    jmp cmparison
 
 100:
-    limm 3 0;
-    limm 1 1;
-    jmp collision;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
-    add 1 1 1 0 0 0;
+    limm 3 0
+    limm 1 1
+    jmp collision
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
+    add 1 1 1 0 0 0
 collision:
 
 end:
