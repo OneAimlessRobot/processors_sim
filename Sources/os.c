@@ -7,10 +7,8 @@
 #include "../Includes/defaults.h"
 #include "../Includes/helper.h"
 #include "../Includes/memory.h"
+#include "../Includes/decoder.h"
 #include "../Includes/cpu.h"
-#include "../Includes/alu.h"
-#include "../Includes/cond_ops.h"
-#include "../Includes/mem_ops.h"
 #include "../Includes/os.h"
 
 context* spawnCtx(cpu*proc,u_int32_t id,u_int32_t data_start,u_int32_t data_size,u_int32_t allocd_size){
@@ -73,25 +71,60 @@ cpu* spawnCPU(memory*mem){
         result->mem=mem;
         result->curr_pc=0;
 	result->prev_pc=0;
-	result->bz_flag=0;
-	if(!load_cpu_masks(result)){
+	result->status_word=0;
+	result->reg_file=NULL;
+	result->wins=NULL;
+	FILE* fp=NULL;
+	if(!(fp=fopen(CPU_FILE_PATH,"r"))){
 
+		perror("NO CPU FILE FOUND!!!!!\n");
+		result->mem=NULL;
+		endCPU(&result);
+		return 0;
+
+	}
+
+	skip_cpu_comments(fp);
+	
+	if(!fscanf(fp,"%u",&result->reg_file_size)){
+		fclose(fp);
+		perror("INVALID INPUT AT CPU CONFIG FILE!!!!!\n");
+		result->mem=NULL;
+		endCPU(&result);
+		return 0;
+	}
+	skip_cpu_comments(fp);
+	
+	fclose(fp);
+	result->reg_file= (u_int8_t*)malloc(result->reg_file_size*WORD_SIZE);
+	memset(result->reg_file,0,result->reg_file_size*WORD_SIZE);
+	if(!load_cpu_masks(&result->dec)){
+
+		perror("INVALID INPUT AT DECODER CONFIG FILE!!!!!\n");
 		result->mem=NULL;
 		endCPU(&result);
 	}
+
 	result->curr_wp=0;
 	result->wins= malloc(sizeof(reg_window)*MAX_NUM_OF_WINDOWS);
 	memset(result->wins,0,sizeof(reg_window)*MAX_NUM_OF_WINDOWS);
-	result->reg_file= (u_int8_t*)malloc(result->reg_file_size*WORD_SIZE);
-        memset(result->reg_file,0,result->reg_file_size*WORD_SIZE);
         return result;
 }
 //does not free the mem field
 void endCPU(cpu** processor){
-        free((*processor)->reg_file);
-        free((*processor)->wins);
-        free(*processor);
-        *processor=NULL;
+        if(*processor){
+	if((*processor)->reg_file){
+		free((*processor)->reg_file);
+	}
+	if((*processor)->wins){
+
+		free((*processor)->wins);
+        
+	}
+		free(*processor);
+        	*processor=NULL;
+
+	}
 
 }
 static void printCPURegs(int fd,cpu* processor){
@@ -102,13 +135,16 @@ static void printCPURegs(int fd,cpu* processor){
 	        printWord(fd, getProcRegValue(processor,i,FULL));
 		dprintf(fd,"] Value: %u\n",getProcRegValue(processor,i,FULL));
         }
-
+		dprintf(fd,"\nStatus word :[");
+	        printWord(fd, processor->status_word);
+		dprintf(fd,"] Value: %u\n",processor->status_word);
+        
 
 }
 void printCPU(int fd,cpu* processor,context* c){
 	dprintf(fd,"\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
 	printCPURegs(fd,processor);
-	dprintf(fd,"\nPC: %u\nPrev. PC: %u\nZero flag: %u\ncontext start: %u\ncontext end: %u\ncontext real start: %u\ncontext real end %u\n",processor->curr_pc,processor->prev_pc,processor->bz_flag,c->proc_code_start,c->proc_allocd_start,c->proc_data_start,c->proc_allocd_end);
+	dprintf(fd,"\nPC: %u\nPrev. PC: %u\ncontext start: %u\ncontext end: %u\ncontext real start: %u\ncontext real end %u\n",processor->curr_pc,processor->prev_pc,c->proc_code_start,c->proc_allocd_start,c->proc_data_start,c->proc_allocd_end);
 }
 
 

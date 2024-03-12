@@ -2,23 +2,8 @@
 #define CPU_H
 #define REG_FILE_DEF_SIZE 32
 
+
 typedef enum {NONE,QUARTER,HALF,FULL}reg_type;
-
-typedef enum {ADD=0x10000000,
-		LMEM=0x20000000,
-			SUB=0x30000000,
-			STO=0x40000000,
-			LIMM=0x50000000,
-			OR=0x60000000,
-			AND=0x70000000,
-			JMP=0x80000000,
-			RET=0x90000000,
-			CMP=0xa0000000,
-			BZERO=0xb0000000,
-			BNZERO=0xc0000000
-			}op_code;
-
-#define OP_CODE_MASK 0xF0000000
 typedef struct reg_window{
 
 	u_int32_t win_start,win_size;
@@ -29,29 +14,10 @@ typedef struct cpu{
 	u_int8_t* reg_file;
 	u_int32_t reg_file_size;
 	memory*mem;
-	u_int32_t bz_flag;
+	u_int32_t status_word;
 	u_int32_t curr_pc,prev_pc;
-	u_int32_t op_code_mask;
-	u_int32_t alu_oper_1_mask,
-			alu_oper_2_mask,
-			alu_dst_mask,
-			alu_op_size_mask,
-			alu_op2_size_mask,
-			alu_dest_size_mask;
-
-	u_int32_t load_imm_dst_mask,
-			load_imm_oper_mask;
-
-	u_int32_t mem_reg_mask,
-			mem_addr_reg_mask,
-			mem_reg_type_mask,
-			mem_size_mask;
-
-	u_int32_t jmp_addr_mask;
-
 	
-	u_int32_t cmp_reg_mask,
-			cmp_value_mask;
+	decoder dec;
 	
 	reg_window* wins;
 	
@@ -59,7 +25,6 @@ typedef struct cpu{
 
 
 }cpu;
-int load_cpu_masks(cpu*proc);
 void execute(cpu*proc,u_int32_t inst);
 void decodeInstruction(cpu*proc,u_int32_t inst);
 u_int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_size);

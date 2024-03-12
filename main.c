@@ -1,5 +1,6 @@
 #include "Includes/preprocessor.h"
 #include "Includes/memory.h"
+#include "Includes/decoder.h"
 #include "Includes/cpu.h"
 #include "Includes/alu.h"
 #include "Includes/compiler.h"
@@ -49,7 +50,7 @@ int main(int argc, char ** argv){
 		printf("ERRO A INICIAR CPU!!!\n");
 		raise(SIGINT);
 	}
-	compile(proc,fpcode,fpcompiled);
+	compile(&proc->dec,fpcode,fpcompiled);
 	fclose(fpcompiled);
 	if(!(fpcompiled=fopen(INSTR_FILE_PATH,"r"))){
 		perror("Invalid file path!!!\n");

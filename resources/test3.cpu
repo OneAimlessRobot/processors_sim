@@ -1,4 +1,4 @@
-     .data:
+.data:
 value1 10;
 value 1;
 value3 11221212121212;
@@ -13,7 +13,7 @@ result 50;
 
 
   
- .code:
+.code:
     //Load values into registers;
     
     limm 1 value1;
