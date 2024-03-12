@@ -3,7 +3,7 @@
 #define REG_FILE_DEF_SIZE 32
 
 
-typedef enum {NONE,QUARTER,HALF,FULL}reg_type;
+typedef enum {NONE,HALF,QUARTER}reg_type;
 typedef struct reg_window{
 
 	u_int32_t win_start,win_size;

@@ -103,17 +103,16 @@ static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
 	u_int32_t mem1=0,mem2=0,mem3=0,mem4=0;
 	u_int32_t loadimm_reg=0,loadimm_value=0;
 	u_int32_t cmp_reg=0,cmp_value=0;
-	int16_t jmp_addr=0;
-	int16_t bzero_addr=0;
-	int16_t ret_off=0;
+	int16_t cond_addr=0;
 	instr_type type=get_instr_type(code);
+	
+	result|=code;
 	switch(type){
 		case ALU:
 		if(!sscanf(buff,"%u%u%u%u%u%u",&alu1,&alu2,&alu3,&alu4,&alu5,&alu6)){
 			perror("Compiling error!!!!! bad instruction syntax in add!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
-		result|=code;
 		result|=mask_photograph(dec->arith.alu_oper_1_mask,alu1);
 		result|=mask_photograph(dec->arith.alu_oper_2_mask,alu2);
 		result|=mask_photograph(dec->arith.alu_dst_mask,alu3);
@@ -128,7 +127,6 @@ static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
 			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
-		result|=code;
 		result|=mask_photograph(dec->mem.mem_reg_mask,mem1);
 		result|=mask_photograph(dec->mem.mem_addr_reg_mask,mem2);
 		result|=mask_photograph(dec->mem.mem_reg_type_mask,mem3);
@@ -139,7 +137,6 @@ static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
 			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
-		result|=code;
 		result|=mask_photograph(dec->load_imm_dst_mask,loadimm_reg);
 		result|=mask_photograph(dec->load_imm_oper_mask,loadimm_value);
 		break;
@@ -148,18 +145,16 @@ static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
 			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
-		result|=code;
 		result|=mask_photograph(dec->arith.cmp_reg_mask,cmp_reg);
 		result|=mask_photograph(dec->arith.cmp_value_mask,cmp_value);
 		
 			break;
 		case CONTROL:
-		if(!sscanf(buff,"%hd",&bzero_addr)){
+		if(!sscanf(buff,"%hd",&cond_addr)){
 			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
-		result|=code;
-		result|=mask_photograph(dec->mem.jmp_addr_mask,bzero_addr);
+		result|=mask_photograph(dec->mem.jmp_addr_mask,cond_addr);
 			break;
 
 		

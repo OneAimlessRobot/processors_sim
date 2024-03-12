@@ -132,8 +132,8 @@ static void printCPURegs(int fd,cpu* processor){
        dprintf(fd,"State of the registers:\nSize: %u\n",processor->reg_file_size);
         for(u_int8_t i=0;i<processor->reg_file_size;i++){
         	dprintf(fd,"Reg %u: [",i);
-	        printWord(fd, getProcRegValue(processor,i,FULL));
-		dprintf(fd,"] Value: %u\n",getProcRegValue(processor,i,FULL));
+	        printWord(fd, getProcRegValue(processor,i,0));
+		dprintf(fd,"] Value: %u\n",getProcRegValue(processor,i,0));
         }
 		dprintf(fd,"\nStatus word :[");
 	        printWord(fd, processor->status_word);
