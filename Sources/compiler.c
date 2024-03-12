@@ -85,7 +85,7 @@ static int32_t get_next_instruction(FILE* fp,char buff[1024]){
 	int curr_char=0;
 	u_int64_t curr_char_index=0;
 	memset(buff,0,1024);
-	while((curr_char=fgetc(fp))!=';'&&(curr_char)!=':'&&curr_char !=EOF){
+	while((curr_char=fgetc(fp))!=';'&&(curr_char)!='\n'&&(curr_char)!=':'&&curr_char !=EOF){
 		buff[curr_char_index++]=(char)curr_char;
 	}
 	if(curr_char==EOF){
