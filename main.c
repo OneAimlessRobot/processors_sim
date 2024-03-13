@@ -2,24 +2,15 @@
 #include "Includes/memory.h"
 #include "Includes/decoder.h"
 #include "Includes/cpu.h"
-#include "Includes/alu.h"
 #include "Includes/compiler.h"
 #include "Includes/os.h"
-cpu* proc=NULL;
-memory* mem=NULL;
-context* ctx=NULL;
+os* sys=NULL;
 FILE* fpcode=NULL;
 FILE* fpcompiled=NULL;
 void sigint_handler(int param){
 
-	if(proc){
-		endCPU(&proc);
-	}
-	if(mem){
-		endMemory(&mem);
-	}
-	if(ctx){
-		endCtx(&ctx);
+	if(sys){
+		endOS(&sys);
 	}
 	if(fpcode){
 		fclose(fpcode);
@@ -28,10 +19,10 @@ void sigint_handler(int param){
 		fclose(fpcompiled);
 	}
 	remove(TMP_FILE_NAME);
-	exit(-1);
+	exit(param);
 
 }
-int main(int argc, char ** argv){
+int main(void){
 	signal(SIGINT,sigint_handler);
 	if(!(fpcode=fopen(PROGRAM_FILE_PATH,"r"))){
 
@@ -43,23 +34,14 @@ int main(int argc, char ** argv){
 		perror("Invalid file path!!!\n");
 		exit(-1);
 	}
-	
-	mem=spawnMemory();
-	proc=spawnCPU(mem);
-	if(!proc){
-		printf("ERRO A INICIAR CPU!!!\n");
-		raise(SIGINT);
-	}
-	compile(&proc->dec,fpcode,fpcompiled);
+	sys=spawnOS();
+	compile(&sys->proc->dec,fpcode,fpcompiled);
 	fclose(fpcompiled);
 	if(!(fpcompiled=fopen(INSTR_FILE_PATH,"r"))){
 		perror("Invalid file path!!!\n");
 		raise(SIGINT);
 	}
-	ctx=spawnCtx(proc,1,6,5,20);
-	
-	loadProg(fpcompiled,proc,ctx);
-	printMemory(1,proc->mem);
-	switchOnCPU(proc,ctx);
+	loadProg(fpcompiled,sys);
+	switchOnCPU(sys);
 	raise(SIGINT);
 }

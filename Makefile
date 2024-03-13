@@ -1,6 +1,6 @@
 BINARY= processors_sim.exe
 
-LDLIBS=  -lm
+LDLIBS=  -lm -lncurses -lncursesw
 INCLUDE= ./Includes .
 SOURCES= . ./Sources
 RESDIR= ./resources
@@ -10,7 +10,7 @@ CURRDIR=echo `pwd`
 CC= gcc
 DEPFLAGS= -MP -MD
 
-CFLAGS= -Wall -DPROGRAMPATHAUX="$(CURRDIR)"  -Wextra -g $(foreach D, $(INCLUDE), -I$(D)) $(DEPFLAGS) `sdl2-config --libs`
+CFLAGS= -Wall -DPROGRAMPATHAUX="$(CURRDIR)"  -Wextra -g $(foreach D, $(INCLUDE), -I$(D)) $(DEPFLAGS)
 
 SOURCEFILES=$(foreach D,$(SOURCES), $(wildcard $(D)/*.c))
 

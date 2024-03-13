@@ -1,33 +1,33 @@
 #ifndef OS_H
 #define OS_H
+
 typedef struct context{
 	u_int32_t proc_id;
 	u_int32_t proc_data_start,proc_code_start,proc_allocd_start,proc_allocd_end;
 	u_int32_t proc_data_size,proc_allocd_size;
 	u_int8_t* reg_state;
-	
+	u_int32_t curr_pc;
+	u_int32_t prev_pc;
+	u_int32_t status_word;
 }context;
+typedef struct p_table{
+	context** processes;
+	u_int32_t num_of_processes;
+	
+}p_table;
 typedef struct os{
 
-	context** process;
-	
-
+	p_table proc_vec;
+	u_int32_t curr_process;
+	cpu* proc;
+	memory* mem;
+	u_int32_t avail_memory;
 }os;
 
-context* spawnCtx(cpu*proc,u_int32_t id,u_int32_t data_start,u_int32_t data_size,u_int32_t allocd_size);
+void switchOnCPU(os* system);
 
-void endCtx(context**ctx);
+os* spawnOS(void);
+void endOS(os** system);
 
-memory* spawnMemory(void);
-void endMemory(memory** mem);
-void printMemory(int fd,memory* mem);
-
-void switchOnCPU(cpu*proc,context* prog);
-
-cpu* spawnCPU(memory*mem);
-void endCPU(cpu** processor);
-
-void loadProg(FILE* progfile,cpu*proc,context* ctx);
-void printCPU(int fd,cpu* processor,context* c);
-
+void loadProg(FILE* progfile,os*system);
 #endif

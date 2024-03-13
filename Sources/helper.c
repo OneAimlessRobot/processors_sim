@@ -1,3 +1,4 @@
+#include <ncurses.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -7,7 +8,19 @@
 #include <stdint.h>
 #include "../Includes/defaults.h"
 #include "../Includes/helper.h"
+void printWordNcurses(u_int32_t line){
+ u_int32_t mask=0x80000000;
+        for(u_int32_t i=0;i<WORD_BITS;i++){
+                if(((mask&line)==mask)){
+                printw("1");
+                }
+                else{
+                printw("0");
+                }
+                mask>>=1;
+        }
 
+}
 void printWord(int fd,u_int32_t line){
 	
 	u_int32_t mask=0x80000000;

@@ -9,6 +9,7 @@
 #include "../Includes/memory.h"
 #include "../Includes/decoder.h"
 #include "../Includes/cpu.h"
+#include "../Includes/os.h"
 #include "../Includes/alu.h"
 #include "../Includes/cond_ops.h"
 #include "../Includes/mem_ops.h"
@@ -17,8 +18,7 @@ u_int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_portion_mask
 	u_int8_t word_size=(WORD_SIZE>>reg_portion_mask);
 	u_int32_t rawvalue=*(u_int32_t*)(&proc->reg_file[regIndex*WORD_SIZE]);
 	u_int32_t mask=0xFFFFFFFF;
-	mask>>=((8*WORD_SIZE)-(8*word_size));
-	//printf("%lu\n",((8*WORD_SIZE)-(8*word_size)));
+	mask>>=((BYTE_BITS*WORD_SIZE)-(BYTE_BITS*word_size));
 	return rawvalue&mask;
 
 }
@@ -26,23 +26,21 @@ static u_int8_t calculateAddr(u_int32_t*baseaddr,reg_type type,u_int8_t reg_addr
 u_int8_t word_size=(WORD_SIZE>>type);
    (*baseaddr)*=WORD_SIZE;
    u_int32_t base =*baseaddr;
-   switch(type){
+	switch(type){
     case HALF:
 	reg_addr&=1;
-	base+=(reg_addr ? word_size : 0);
 	break;
     case QUARTER:
 	reg_addr&=3;
-	for(u_int8_t i=0;i<reg_addr;i++){
-
-		base+=word_size;
-	}
 	break;
     default:
 	
 	break;
 
 }
+	for(u_int8_t i=0;i<reg_addr;i++){
+		base+=word_size;
+	}
 	(*baseaddr)=base;
 	return word_size;
 }

@@ -1,6 +1,10 @@
 #include <stdlib.h>
+#include <ncurses.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
@@ -11,7 +15,119 @@
 #include "../Includes/cpu.h"
 #include "../Includes/os.h"
 
-context* spawnCtx(cpu*proc,u_int32_t id,u_int32_t data_start,u_int32_t data_size,u_int32_t allocd_size){
+static void printCPURegs(cpu* processor){
+
+       printw("State of the registers:\nSize: %u\n",processor->reg_file_size);
+        for(u_int8_t i=0;i<processor->reg_file_size;i++){
+        	printw("Reg %u: [",i);
+	        printWordNcurses(getProcRegValue(processor,i,0));
+		printw("] Value: %u\n",getProcRegValue(processor,i,0));
+        }
+		printw("\nStatus word :[");
+	        printWordNcurses( processor->status_word);
+		printw("] Value: %u\n",processor->status_word);
+
+
+}
+static void copyCPUStateToContext(cpu* proc,context* c){
+	u_int32_t reg_file_size=proc->reg_file_size;
+	memcpy(c->reg_state,proc->reg_file,reg_file_size*WORD_SIZE);
+	c->status_word=proc->status_word;
+	c->curr_pc=proc->curr_pc;
+	c->prev_pc=proc->prev_pc;
+
+}
+static void loadContextIntoCPU(context* c,cpu*proc){
+	memcpy(proc->reg_file,c->reg_state,proc->reg_file_size*WORD_SIZE);
+	proc->status_word=c->status_word;
+	proc->curr_pc=c->curr_pc;
+	proc->prev_pc=c->prev_pc;
+
+}
+static void printCPU(cpu* processor){
+	printw("\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
+	printCPURegs(processor);
+	printw("\nPC: %u\nPrev. PC: %u\n",processor->curr_pc,processor->prev_pc);
+}
+
+static u_int32_t getMemoryWord(memory*mem,u_int32_t index){
+	return *(u_int32_t*)(&mem->contents[index*WORD_SIZE]);
+
+}
+static void printMemory(memory* mem){
+        printw("State of this memory:\nSize: %u\n",mem->size);
+        for(u_int32_t i=0;i<mem->size/WORD_SIZE;i++){
+        	printw("Line %u: [",i);
+	        printWordNcurses( getMemoryWord(mem,i));
+		printw("]\n");
+        }
+
+
+}
+
+static void printProc(context*c,cpu*proc){
+	
+	printw("\nProcesso com id: %d\n",c->proc_id);
+	if(c){
+	printw("Inicio de processo: %d\nInicio de codigo do processo: %d\nInicio de memoria reservda ao processo: %d\nFim do processo: %d\n",c->proc_data_start,c->proc_code_start,c->proc_allocd_start,c->proc_allocd_end);
+	printw("Tamanho de processo: %d\nNumero de registos: %d\nEstado de registos:\n\n",c->proc_allocd_end-c->proc_data_start,proc->reg_file_size);
+	for(u_int8_t i=0;i<proc->reg_file_size;i++){
+        	printw("Reg %u: [",i);
+	        printWordNcurses(*(u_int32_t*)(&c->reg_state[i*WORD_SIZE]));
+		printw("] Value: %u\n",*(u_int32_t*)(&c->reg_state[i*WORD_SIZE]));
+        }
+		printw("\nStatus word :[");
+	        printWordNcurses(c->status_word);
+		printw("] Value: %u\n\n",c->status_word);
+        	printw("Process stored PC: %u\n",c->curr_pc);
+        	printw("Process stored Prev PC: %u\n",c->prev_pc);
+        }
+	else{
+		printw("Processo nulo!\n");
+	}
+	printw("\nFim deste processo\n");
+	
+
+}
+static void printProcTable(p_table* procs,cpu*proc){
+	printw("Tabela de processos:\nNumero de processos: %d\n",procs->num_of_processes);
+	for(u_int32_t i=0;i<procs->num_of_processes;i++){
+		printProc(procs->processes[i],proc);
+
+	}
+
+}
+static void printOS(os* system){
+	erase();
+	printw("\n-----------------------\n|--State of this os--|\n-----------------------\n");
+	printCPURegs(system->proc);
+	printCPU(system->proc);
+	printProcTable(&(system->proc_vec),system->proc);
+	refresh();
+}
+
+static void menu(os*system){
+		int pid=fork();
+		switch(pid){
+			case -1:
+				endwin();
+				perror("Erro no fork no menu!!!!\n");
+				raise(SIGINT);
+				break;
+			case 0:
+				printOS(system);
+				usleep(1000000);
+				raise(SIGINT);
+				break;
+			default:
+				break;
+		
+		}
+				
+
+}
+
+static context* spawnCtx(cpu*proc,u_int32_t id,u_int32_t data_start,u_int32_t data_size,u_int32_t allocd_size){
 	context* result=malloc(sizeof(context));
 	result->proc_id=id;
 	result->proc_data_start=data_start;
@@ -22,51 +138,143 @@ context* spawnCtx(cpu*proc,u_int32_t id,u_int32_t data_start,u_int32_t data_size
 	result->proc_allocd_size=allocd_size;
 	result->reg_state=malloc(WORD_SIZE*proc->reg_file_size);
 	memset(result->reg_state,0,WORD_SIZE*proc->reg_file_size);
+	result->status_word=0;
+	result->curr_pc=0;
+	result->prev_pc=0;
 	return result;
 
 }
-void endCtx(context**ctx){
-	free((*ctx)->reg_state);
+static void addCtx(os* system,u_int32_t proc_start,u_int32_t data_size,u_int32_t allocd_size){
+	system->proc_vec.num_of_processes++;
+	for(u_int32_t i=0;i<system->proc_vec.num_of_processes;i++){
+		if(!system->proc_vec.processes[i]){
+			system->proc_vec.processes[i]=spawnCtx(system->proc,system->proc_vec.num_of_processes-1,proc_start,data_size,allocd_size);
+			break;
+		}
+	}
+
+}
+static void endCtx(context**ctx){
+	if(*ctx){
+	if((*ctx)->reg_state){
+
+		free((*ctx)->reg_state);
+
+	}
 	free((*ctx));
 	*ctx=NULL;
+	}
+
+}
+void loadProg(FILE* progfile,os* system){
+
+	u_int32_t spawned_start_addr=0;
+	u_int32_t spawned_data_size=5;
+	u_int32_t spawned_allocd_size=20;
+	u_int32_t code_size=0;
+	u_int32_t value=0;
+	while((fscanf(progfile,"%x",&value)==1)){
+		dprintf(1,"Li instruçao. code_size= %d\n",code_size);
+		code_size++;
+	}
 	
+	u_int32_t proc_size=code_size+spawned_data_size+spawned_allocd_size;
+	if(system->avail_memory<proc_size){
 
-}
-void loadProg(FILE* progfile,cpu* proc,context* ctx){
-	u_int32_t value;
-	memset(proc->mem->contents+(ctx->proc_data_start*WORD_SIZE),0xFF,(ctx->proc_data_size)*WORD_SIZE);
-	u_int32_t curr_cell=ctx->proc_code_start;
-	while((fscanf(progfile,"%x",&value)==1)&&(curr_cell<(proc->mem->size/WORD_SIZE))){
-		curr_cell++;
+		perror("OUT OF MEMORY!!!!\n");
+		fclose(progfile);
+		raise(SIGINT);
+
 	}
-	ctx->proc_allocd_start=curr_cell;
-	curr_cell=ctx->proc_code_start;
 	rewind(progfile);
-	while((fscanf(progfile,"%x",&value)==1)&&(curr_cell<(ctx->proc_allocd_start))){
-		storeValue(proc->mem, curr_cell*WORD_SIZE, WORD_SIZE, (void*)&value);
+	addCtx(system,spawned_start_addr,spawned_data_size,spawned_allocd_size);
+	context*ctx=system->proc_vec.processes[system->curr_process];
+	memset(system->mem->contents+(ctx->proc_data_start*WORD_SIZE),0xFF,(ctx->proc_data_size)*WORD_SIZE);
+	ctx->proc_code_start=ctx->proc_data_start+ctx->proc_data_size;
+	u_int32_t curr_cell=ctx->proc_code_start;
+	curr_cell=ctx->proc_code_start;
+	while((fscanf(progfile,"%x",&value)==1)&&(curr_cell<(ctx->proc_code_start+code_size))){
+		dprintf(1,"Carreguei instruçao. curr_mem_cell= %d\n",curr_cell);
+		storeValue(system->proc->mem, curr_cell*WORD_SIZE, WORD_SIZE, (void*)&value);
 		curr_cell++;
 
 	}
-	memset(proc->mem->contents+(ctx->proc_allocd_start*WORD_SIZE),0xFF,(ctx->proc_allocd_size)*WORD_SIZE);
+	
+	ctx->proc_allocd_start=curr_cell;
+	memset(system->proc->mem->contents+(ctx->proc_allocd_start*WORD_SIZE),0xFF,(ctx->proc_allocd_size)*WORD_SIZE);
 	ctx->proc_allocd_end=ctx->proc_allocd_start+ctx->proc_allocd_size;
-
+	system->avail_memory-=proc_size;
+	ctx->curr_pc=ctx->proc_code_start;
 }
-void switchOnCPU(cpu*proc,context* prog){
-	proc->curr_pc=prog->proc_code_start;
-	printCPU(1,proc,prog);
-		
-	while((proc->curr_pc>=prog->proc_code_start)&&(proc->curr_pc<(prog->proc_allocd_start))){
+void switchOnCPU(os*system){
+	if(system->proc_vec.num_of_processes){
+
+	initscr();
+	start_color();
+	timeout(10);
+	curs_set(0);
+	noecho();
+
+	context* prog=system->proc_vec.processes[system->curr_process];
+	system->proc->curr_pc=prog->curr_pc;
+	while((system->proc->curr_pc>=prog->proc_code_start)&&(system->proc->curr_pc<(prog->proc_allocd_start))){
 		u_int32_t value=0;
-		loadValue(proc->mem,(proc->curr_pc)*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
-		printMemory(1,proc->mem);
-		printCPU(1,proc,prog);
-		execute(proc,value);
-		dprintf(1,"Press enter!\n");
-		getchar();
+		loadValue(system->mem,(system->proc->curr_pc)*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
+
+		execute(system->proc,value);
+
+		copyCPUStateToContext(system->proc,prog);
+		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
+		prog=system->proc_vec.processes[system->curr_process];
+		loadContextIntoCPU(prog,system->proc);
+		menu(system);
+		usleep(250000);
+	}
+		endwin();
+		printf("Finished!\n");
+		raise(SIGINT);
+	}
+}
+static void endMemory(memory** mem){
+	if(*mem){
+	if((*mem)->contents){
+		free((*mem)->contents);
+        	(*mem)->contents=NULL;
+        }
+		(*mem)->size=0;
+        	free(*mem);
+        	*mem=NULL;
+
 	}
 
 }
-cpu* spawnCPU(memory*mem){
+
+
+memory* spawnMemory(void){
+        memory* result= malloc(sizeof(memory));
+        result->contents=(u_int8_t*)malloc((result->size=MEM_DEF_SIZE));
+        memset(result->contents,0,result->size);
+        return result;
+}
+//does not free the mem field
+static void endCPU(cpu** processor){
+        if(*processor){
+	if((*processor)->reg_file){
+		free((*processor)->reg_file);
+	}
+	if((*processor)->wins){
+
+		free((*processor)->wins);
+        
+	}
+		free(*processor);
+        	*processor=NULL;
+
+	}
+
+}
+
+static cpu* spawnCPU(memory*mem){
         cpu* result= malloc(sizeof(cpu));
         result->mem=mem;
         result->curr_pc=0;
@@ -110,73 +318,44 @@ cpu* spawnCPU(memory*mem){
 	memset(result->wins,0,sizeof(reg_window)*MAX_NUM_OF_WINDOWS);
         return result;
 }
-//does not free the mem field
-void endCPU(cpu** processor){
-        if(*processor){
-	if((*processor)->reg_file){
-		free((*processor)->reg_file);
+
+os* spawnOS(void){
+	os* result= malloc(sizeof(os));
+	result->proc_vec.num_of_processes=0;
+	result->curr_process=0;
+	result->proc_vec.processes=malloc(sizeof(context*)*MAX_NUM_OF_PROCESSES);
+	memset(result->proc_vec.processes,0,sizeof(context*)*MAX_NUM_OF_PROCESSES);
+	result->mem=spawnMemory();
+	result->avail_memory=result->mem->size/WORD_SIZE;
+	result->proc=spawnCPU(result->mem);
+	result->proc->mem=result->mem;
+	result->proc->running_system=result;
+	if(!result->proc){
+		perror("ERRO A SPAWNAR OS!!!!\n");
+		endOS(&result);
 	}
-	if((*processor)->wins){
+	return result;
 
-		free((*processor)->wins);
-        
+}
+void endOS(os** system){
+        if(*system){
+	endMemory(&((*system)->mem));
+        endCPU(&((*system)->proc));
+	if((*system)->proc_vec.processes){
+	for(u_int32_t i=0;i<((*system)->proc_vec.num_of_processes);i++){
+		
+		if((*system)->proc_vec.processes[i]){
+			endCtx(&((*system)->proc_vec.processes[i]));
+			(*system)->proc_vec.num_of_processes--;
+		}
+	
 	}
-		free(*processor);
-        	*processor=NULL;
-
+		free((*system)->proc_vec.processes);
+		(*system)->proc_vec.processes=NULL;
 	}
-
-}
-static void printCPURegs(int fd,cpu* processor){
-
-       dprintf(fd,"State of the registers:\nSize: %u\n",processor->reg_file_size);
-        for(u_int8_t i=0;i<processor->reg_file_size;i++){
-        	dprintf(fd,"Reg %u: [",i);
-	        printWord(fd, getProcRegValue(processor,i,0));
-		dprintf(fd,"] Value: %u\n",getProcRegValue(processor,i,0));
-        }
-		dprintf(fd,"\nStatus word :[");
-	        printWord(fd, processor->status_word);
-		dprintf(fd,"] Value: %u\n",processor->status_word);
-        
-
-}
-void printCPU(int fd,cpu* processor,context* c){
-	dprintf(fd,"\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
-	printCPURegs(fd,processor);
-	dprintf(fd,"\nPC: %u\nPrev. PC: %u\ncontext start: %u\ncontext end: %u\ncontext real start: %u\ncontext real end %u\n",processor->curr_pc,processor->prev_pc,c->proc_code_start,c->proc_allocd_start,c->proc_data_start,c->proc_allocd_end);
-}
-
-
-
-memory* spawnMemory(void){
-        memory* result= malloc(sizeof(memory));
-        result->contents=(u_int8_t*)malloc((result->size=MEM_DEF_SIZE));
-        memset(result->contents,0,result->size);
-        return result;
-}
-void endMemory(memory** mem){
-
-        free((*mem)->contents);
-        (*mem)->contents=NULL;
-        (*mem)->size=0;
-        free(*mem);
-        *mem=NULL;
-
-
-}
-
-static u_int32_t getMemoryWord(memory*mem,u_int32_t index){
-	return *(u_int32_t*)(&mem->contents[index*WORD_SIZE]);
-
-}
-void printMemory(int fd,memory* mem){
-        dprintf(fd,"State of this memory:\nSize: %u\n",mem->size);
-        for(u_int32_t i=0;i<mem->size/WORD_SIZE;i++){
-        	dprintf(fd,"Line %u: [",i);
-	        printWord(fd, getMemoryWord(mem,i));
-		dprintf(fd,"]\n");
-        }
-
+		free(*system);
+		*system=NULL;
+	}
+	
 
 }

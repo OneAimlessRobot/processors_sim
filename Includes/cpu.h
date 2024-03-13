@@ -1,8 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
-#define REG_FILE_DEF_SIZE 32
 
-
+struct os;
 typedef enum {NONE,HALF,QUARTER}reg_type;
 typedef struct reg_window{
 
@@ -22,7 +21,8 @@ typedef struct cpu{
 	reg_window* wins;
 	
 	u_int8_t curr_wp;
-
+	
+	struct os* running_system;
 
 }cpu;
 void execute(cpu*proc,u_int32_t inst);

@@ -148,7 +148,7 @@ FILE* fp=NULL;
 instr_type get_instr_type(op_code code){
 
 
-instr_type type;
+instr_type type=0;
 	switch(code){
 	case ADD:
 		type=ALU;

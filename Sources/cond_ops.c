@@ -57,6 +57,7 @@ void proc_cond_op(cpu*proc,op_code code,u_int32_t inst){
 	int16_t addr_val;
 	u_int32_t value;
 	u_int8_t reg;
+	u_int32_t cmp_result=0x0;
 	process_cond_op(&proc->dec,inst,&addr_val);
 switch(code){
 	case JMP:
@@ -65,7 +66,8 @@ switch(code){
 	break;
 	case CMP:
 	cond_load(&proc->dec,inst,&reg,&value);
-	proc->status_word|=(!(getProcRegValue(proc,reg,0)-value) ? 0x1 : 0x0);
+	cmp_result=getProcRegValue(proc,reg,0)-value;
+	proc->status_word|=!(cmp_result);
 	break;
 	case BZERO:
 	bz(proc,inst);
