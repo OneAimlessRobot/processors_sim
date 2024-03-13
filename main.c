@@ -42,6 +42,6 @@ int main(void){
 		raise(SIGINT);
 	}
 	loadProg(fpcompiled,sys);
-	switchOnCPU(sys);
+	switchOnCPU(1,sys);
 	raise(SIGINT);
 }

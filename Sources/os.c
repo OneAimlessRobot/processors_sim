@@ -15,8 +15,21 @@
 #include "../Includes/cpu.h"
 #include "../Includes/os.h"
 
-static void printCPURegs(cpu* processor){
+static void printCPURegs(int fd,cpu* processor){
+	if(fd>=1){
+	
+       dprintf(fd,"State of the registers:\nSize: %u\n",processor->reg_file_size);
+        for(u_int8_t i=0;i<processor->reg_file_size;i++){
+        	dprintf(fd,"Reg %u: [",i);
+	        printWord(fd,getProcRegValue(processor,i,0));
+		dprintf(fd,"] Value: %u\n",getProcRegValue(processor,i,0));
+        }
+		dprintf(fd,"\nStatus word :[");
+	        printWord(fd, processor->status_word);
+		dprintf(fd,"] Value: %u\n",processor->status_word);
+	}
 
+	else{
        printw("State of the registers:\nSize: %u\n",processor->reg_file_size);
         for(u_int8_t i=0;i<processor->reg_file_size;i++){
         	printw("Reg %u: [",i);
@@ -26,7 +39,7 @@ static void printCPURegs(cpu* processor){
 		printw("\nStatus word :[");
 	        printWordNcurses( processor->status_word);
 		printw("] Value: %u\n",processor->status_word);
-
+	}
 
 }
 static void copyCPUStateToContext(cpu* proc,context* c){
@@ -44,29 +57,68 @@ static void loadContextIntoCPU(context* c,cpu*proc){
 	proc->prev_pc=c->prev_pc;
 
 }
-static void printCPU(cpu* processor){
+static void printCPU(int fd,cpu* processor){
+	if(fd>=1){
+	dprintf(fd,"\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
+	printCPURegs(fd,processor);
+	dprintf(fd,"\nPC: %u\nPrev. PC: %u\n",processor->curr_pc,processor->prev_pc);
+	}
+	else{
 	printw("\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
-	printCPURegs(processor);
+	printCPURegs(fd,processor);
 	printw("\nPC: %u\nPrev. PC: %u\n",processor->curr_pc,processor->prev_pc);
+	}
 }
 
 static u_int32_t getMemoryWord(memory*mem,u_int32_t index){
 	return *(u_int32_t*)(&mem->contents[index*WORD_SIZE]);
 
 }
-static void printMemory(memory* mem){
-        printw("State of this memory:\nSize: %u\n",mem->size);
+static void printMemory(int fd,memory* mem){
+        if(fd>=1){
+	dprintf(fd,"State of this memory:\nSize: %u\n",mem->size);
+        for(u_int32_t i=0;i<mem->size/WORD_SIZE;i++){
+        	dprintf(fd,"Line %u: [",i);
+	        printWord(fd, getMemoryWord(mem,i));
+		dprintf(fd,"]\n");
+        }
+	}
+	else{
+	printw("State of this memory:\nSize: %u\n",mem->size);
         for(u_int32_t i=0;i<mem->size/WORD_SIZE;i++){
         	printw("Line %u: [",i);
 	        printWordNcurses( getMemoryWord(mem,i));
 		printw("]\n");
         }
+	}
 
 
 }
 
-static void printProc(context*c,cpu*proc){
-	
+static void printProc(int fd,context*c,cpu*proc){
+	if(fd >=1){
+
+	dprintf(fd,"\nProcesso com id: %d\n",c->proc_id);
+	if(c){
+	dprintf(fd,"Inicio de processo: %d\nInicio de codigo do processo: %d\nInicio de memoria reservda ao processo: %d\nFim do processo: %d\n",c->proc_data_start,c->proc_code_start,c->proc_allocd_start,c->proc_allocd_end);
+	dprintf(fd,"Tamanho de processo: %d\nNumero de registos: %d\nEstado de registos:\n\n",c->proc_allocd_end-c->proc_data_start,proc->reg_file_size);
+	for(u_int8_t i=0;i<proc->reg_file_size;i++){
+        	dprintf(fd,"Reg %u: [",i);
+	        printWord(fd,*(u_int32_t*)(&c->reg_state[i*WORD_SIZE]));
+		dprintf(fd,"] Value: %u\n",*(u_int32_t*)(&c->reg_state[i*WORD_SIZE]));
+        }
+		dprintf(fd,"\nStatus word :[");
+	        printWord(fd,c->status_word);
+		dprintf(fd,"] Value: %u\n\n",c->status_word);
+        	dprintf(fd,"Process stored PC: %u\n",c->curr_pc);
+        	dprintf(fd,"Process stored Prev PC: %u\n",c->prev_pc);
+        }
+	else{
+		dprintf(fd,"Processo nulo!\n");
+	}
+	dprintf(fd,"\nFim deste processo\n");
+	}
+	else{
 	printw("\nProcesso com id: %d\n",c->proc_id);
 	if(c){
 	printw("Inicio de processo: %d\nInicio de codigo do processo: %d\nInicio de memoria reservda ao processo: %d\nFim do processo: %d\n",c->proc_data_start,c->proc_code_start,c->proc_allocd_start,c->proc_allocd_end);
@@ -86,27 +138,45 @@ static void printProc(context*c,cpu*proc){
 		printw("Processo nulo!\n");
 	}
 	printw("\nFim deste processo\n");
-	
-
-}
-static void printProcTable(p_table* procs,cpu*proc){
-	printw("Tabela de processos:\nNumero de processos: %d\n",procs->num_of_processes);
-	for(u_int32_t i=0;i<procs->num_of_processes;i++){
-		printProc(procs->processes[i],proc);
-
 	}
 
 }
-static void printOS(os* system){
+static void printProcTable(int fd,p_table* procs,cpu*proc){
+	if(fd>=1){
+	dprintf(fd,"Tabela de processos:\nNumero de processos: %d\n",procs->num_of_processes);
+	for(u_int32_t i=0;i<procs->num_of_processes;i++){
+		printProc(fd,procs->processes[i],proc);
+
+	}
+	
+	}
+	else{
+	printw("Tabela de processos:\nNumero de processos: %d\n",procs->num_of_processes);
+	for(u_int32_t i=0;i<procs->num_of_processes;i++){
+		printProc(fd,procs->processes[i],proc);
+
+	}
+	}
+
+}
+static void printOS(int fd,os* system){
+	if(fd>=1){
+	dprintf(fd,"\033[2J");
+	dprintf(fd,"\n-----------------------\n|--State of this os--|\n-----------------------\n");
+	printCPU(fd,system->proc);
+	printProcTable(fd,&(system->proc_vec),system->proc);
+	
+	}
+	else{
 	erase();
 	printw("\n-----------------------\n|--State of this os--|\n-----------------------\n");
-	printCPURegs(system->proc);
-	printCPU(system->proc);
-	printProcTable(&(system->proc_vec),system->proc);
+	printCPU(fd,system->proc);
+	printProcTable(fd,&(system->proc_vec),system->proc);
 	refresh();
+	}
 }
 
-static void menu(os*system){
+static void menu(int fd,os*system){
 		int pid=fork();
 		switch(pid){
 			case -1:
@@ -115,8 +185,7 @@ static void menu(os*system){
 				raise(SIGINT);
 				break;
 			case 0:
-				printOS(system);
-				usleep(1000000);
+				printOS(fd,system);
 				raise(SIGINT);
 				break;
 			default:
@@ -195,26 +264,26 @@ void loadProg(FILE* progfile,os* system){
 	curr_cell=ctx->proc_code_start;
 	while((fscanf(progfile,"%x",&value)==1)&&(curr_cell<(ctx->proc_code_start+code_size))){
 		dprintf(1,"Carreguei instruçao. curr_mem_cell= %d\n",curr_cell);
-		storeValue(system->proc->mem, curr_cell*WORD_SIZE, WORD_SIZE, (void*)&value);
+		storeValue(system->mem, curr_cell*WORD_SIZE, WORD_SIZE, (void*)&value);
 		curr_cell++;
 
 	}
 	
 	ctx->proc_allocd_start=curr_cell;
-	memset(system->proc->mem->contents+(ctx->proc_allocd_start*WORD_SIZE),0xFF,(ctx->proc_allocd_size)*WORD_SIZE);
+	memset(system->mem->contents+(ctx->proc_allocd_start*WORD_SIZE),0xFF,(ctx->proc_allocd_size)*WORD_SIZE);
 	ctx->proc_allocd_end=ctx->proc_allocd_start+ctx->proc_allocd_size;
 	system->avail_memory-=proc_size;
 	ctx->curr_pc=ctx->proc_code_start;
 }
-void switchOnCPU(os*system){
+void switchOnCPU(int fd,os*system){
 	if(system->proc_vec.num_of_processes){
-
+	if(!(fd>=1)){
 	initscr();
 	start_color();
 	timeout(10);
 	curs_set(0);
 	noecho();
-
+	}
 	context* prog=system->proc_vec.processes[system->curr_process];
 	system->proc->curr_pc=prog->curr_pc;
 	while((system->proc->curr_pc>=prog->proc_code_start)&&(system->proc->curr_pc<(prog->proc_allocd_start))){
@@ -227,10 +296,12 @@ void switchOnCPU(os*system){
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		menu(system);
-		usleep(250000);
+		menu(fd,system);
+		usleep(100000);
 	}
+		if(!(fd>=1)){
 		endwin();
+		}
 		printf("Finished!\n");
 		raise(SIGINT);
 	}
@@ -274,9 +345,8 @@ static void endCPU(cpu** processor){
 
 }
 
-static cpu* spawnCPU(memory*mem){
+static cpu* spawnCPU(void){
         cpu* result= malloc(sizeof(cpu));
-        result->mem=mem;
         result->curr_pc=0;
 	result->prev_pc=0;
 	result->status_word=0;
@@ -286,7 +356,6 @@ static cpu* spawnCPU(memory*mem){
 	if(!(fp=fopen(CPU_FILE_PATH,"r"))){
 
 		perror("NO CPU FILE FOUND!!!!!\n");
-		result->mem=NULL;
 		endCPU(&result);
 		return 0;
 
@@ -297,7 +366,6 @@ static cpu* spawnCPU(memory*mem){
 	if(!fscanf(fp,"%u",&result->reg_file_size)){
 		fclose(fp);
 		perror("INVALID INPUT AT CPU CONFIG FILE!!!!!\n");
-		result->mem=NULL;
 		endCPU(&result);
 		return 0;
 	}
@@ -309,7 +377,6 @@ static cpu* spawnCPU(memory*mem){
 	if(!load_cpu_masks(&result->dec)){
 
 		perror("INVALID INPUT AT DECODER CONFIG FILE!!!!!\n");
-		result->mem=NULL;
 		endCPU(&result);
 	}
 
@@ -327,8 +394,7 @@ os* spawnOS(void){
 	memset(result->proc_vec.processes,0,sizeof(context*)*MAX_NUM_OF_PROCESSES);
 	result->mem=spawnMemory();
 	result->avail_memory=result->mem->size/WORD_SIZE;
-	result->proc=spawnCPU(result->mem);
-	result->proc->mem=result->mem;
+	result->proc=spawnCPU();
 	result->proc->running_system=result;
 	if(!result->proc){
 		perror("ERRO A SPAWNAR OS!!!!\n");

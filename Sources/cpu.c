@@ -52,13 +52,13 @@ u_int8_t word_size=calculateAddr(&base,type,reg_addr);
 void loadMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr){
    u_int8_t word_size=calculateAddr(&base,type,reg_addr);
    calculateAddr(&basemem,type,reg_addr);
-   memcpy(proc->reg_file + base,proc->mem->contents + basemem, word_size);
+   memcpy(proc->reg_file + base,proc->running_system->mem->contents + basemem, word_size);
 
 }
 void storeMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr){
    u_int8_t word_size=calculateAddr(&base,type,reg_addr);
    calculateAddr(&basemem,type,reg_addr);
-       memcpy(proc->mem->contents + (basemem),proc->reg_file + base, word_size);
+       memcpy(proc->running_system->mem->contents + (basemem),proc->reg_file + base, word_size);
 
 }
 static void load_imm(cpu*proc,u_int32_t inst){

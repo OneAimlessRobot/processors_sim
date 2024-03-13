@@ -12,7 +12,6 @@ typedef struct cpu{
 
 	u_int8_t* reg_file;
 	u_int32_t reg_file_size;
-	memory*mem;
 	u_int32_t status_word;
 	u_int32_t curr_pc,prev_pc;
 	

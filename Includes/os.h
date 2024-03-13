@@ -24,7 +24,7 @@ typedef struct os{
 	u_int32_t avail_memory;
 }os;
 
-void switchOnCPU(os* system);
+void switchOnCPU(int fd,os* system);
 
 os* spawnOS(void);
 void endOS(os** system);

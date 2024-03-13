@@ -1,74 +1,43 @@
 .data:
-value1 10;
-value 1;
-value3 11221212121212;
-value2 30;
-result 50;
+one_value_reg 2;
+zero_value_reg 1;
+result_reg 9;         // Register to store the result
+num_to_factorial 10;  // Number for which factorial is to be calculated
+fact_param_reg 7;
+mult_param_1_reg 19;
+mult_param_2_reg 18;
+curr_it_reg 3;
 
-
-
-  
 .code:
 
-    //Load values into registers;
-    
-    limm 1 value1
-    limm 0 69
-    limm 4 1
- 
- 
- 
-limm 2 value2
-  
- 
-       limm 5 result
-    add 0 0 0 2 2 2
-   
- 
- 
-    //Perform addition;
- 
- 
- 
-     add 1 2 3 2 2 2
- 
- 
- 
+start:
+    // Load initial value 1 into the result register
+    limm result_reg num_to_factorial
+    limm zero_value_reg 0
+    limm one_value_reg 1
+    limm curr_it_reg num_to_factorial
 
-    //Store the result in memory;
-    store value 5 0 2
+continue:
+    sub curr_it_reg one_value_reg curr_it_reg 0 0 0
+    add zero_value_reg curr_it_reg fact_param_reg 0 0 0
+    cmp curr_it_reg 0
+    bnz calc_factorial_begin
+    bz end
 
-    //Compare the result with a threshold;
-cmparison:
-    cmp 3 30
-    //Branch if zero
+calc_factorial_begin:
+    // Multiply the current result by the current value
+    add zero_value_reg fact_param_reg mult_param_2_reg 0 0 0
+    add zero_value_reg result_reg mult_param_1_reg 0 0 0
+    sub fact_param_reg one_value_reg fact_param_reg 0 0 0
+    cmp fact_param_reg 0
+    bnz mult_function
+    bz continue
 
 
-	;
-    bz 100
-    //Subtract one from the result
-
-
-	;
-    sub 3 4 3 0 0 0
-
-    //Branch back to the comparison;
-    jmp cmparison
-
-100:
-    limm 3 0
-    limm 1 1
-    jmp collision
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-    add 1 1 1 0 0 0
-collision:
-
+mult_function:
+    add result_reg mult_param_1_reg result_reg 0 0 0
+    sub mult_param_2_reg one_value_reg mult_param_2_reg 0 0 0
+    cmp mult_param_2_reg 0
+    bnz mult_function
+    bz call_factorial_begin  
 end:
