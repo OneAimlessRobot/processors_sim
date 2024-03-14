@@ -14,21 +14,46 @@ start:
 	                                limm 1 0 
 	                                               limm 7 9 
 	                            limm 9 1 
-	                                                                        add 1 1 1 0 0 0 
-	                                                                        add 1 1 1 0 0 0 
+sddsdsd:
+sddsds:
+dsdsds:
+sddsds:
+
+sddsds:
+sddsds:
 	
 fact_iteration:	
 	                                                                       add 9 1 19 0 0 0 
 	                                                                           add 7 1 18 0 0 0 
-	                                                                       sub 7 2 7 0 0 0 
+
+sdsd:
+sdds:	                                                                       sub 7 2 7 0 0 0 
 	                              cmp 7 0 
-	               bz 7 
-	                   bnz 0 
+	               bz 12 
+	                   bnz 1 
 mult:
+dssdsdds:
+dsdsds:
+dsdsds:
+dssds:
+ 
+ 
+ 
+  
+  
+ 
+ 
+ 
+ 
+	//ssddssdjsdjsdjdsjdsdsjdsjdsjsdjdsj 
+ 
+ 
+ 
 	                                                                   add 9 19 9 0 0 0 
 	                                                                             sub 18 2 18 0 0 0 
+	
 	                                 cmp 18 1 
-	                                     bz -12 
-	                   bnz -6 
+	                                     bz -17 
+	                   bnz -9 
 
 end:

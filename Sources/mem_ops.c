@@ -31,9 +31,11 @@ process_mem_op(&proc->dec,inst,&memregval,&memaddrreg,&memregtype);
 addr=getProcRegValue(proc,memaddrreg,memregtype);
 switch(code){
 	case STO:
+		dprintf(1,"Store!!!!");
 		storeMemValue(proc,memregval,addr,memregtype,0);
 		break;
 	case LMEM:
+		dprintf(1,"Load!!!!");
 		loadMemValue(proc,memregval,addr,memregtype,0);
 		break;
 	default:

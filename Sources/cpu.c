@@ -72,6 +72,7 @@ static void load_imm(cpu*proc,u_int32_t inst){
 void execute(cpu*proc,u_int32_t inst){
 	op_code code=inst&proc->dec.op_code_mask;
 	instr_type type=get_instr_type(code);
+	u_int32_t init_pc=proc->curr_pc;
 	switch(type){
 		case ALU:
 		proc_alu_op(proc,code,inst);
@@ -92,7 +93,10 @@ void execute(cpu*proc,u_int32_t inst){
 		break;
 
 	}
+	u_int32_t end_pc= proc->curr_pc;
+	if(init_pc==end_pc){
 	proc->curr_pc++;
+	}
 	
 
 }

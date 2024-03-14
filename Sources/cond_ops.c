@@ -61,21 +61,26 @@ void proc_cond_op(cpu*proc,op_code code,u_int32_t inst){
 	process_cond_op(&proc->dec,inst,&addr_val);
 switch(code){
 	case JMP:
+		dprintf(1,"Jmp!!!!");
 	proc->prev_pc=proc->curr_pc;
 	proc->curr_pc+=(int16_t)addr_val;
 	break;
 	case CMP:
+		dprintf(1,"Cmp!!!!");
 	cond_load(&proc->dec,inst,&reg,&value);
 	cmp_result=getProcRegValue(proc,reg,0)-value;
 	proc->status_word=(!(cmp_result) ?  (proc->status_word | 1) :(proc->status_word & (~1)));
 	break;
 	case BZERO:
+		dprintf(1,"Bzero!!!!");
 	bz(proc,inst);
 	break;
 	case BNZERO:
+		dprintf(1,"Bnzero!!!!");
 	bnz(proc,inst);
 	break;
 	case RET:
+		dprintf(1,"Ret!!!!");
 	proc->curr_pc=proc->prev_pc+addr_val;
 	proc->prev_pc=proc->curr_pc;
 	break;

@@ -6,7 +6,7 @@
 typedef struct symbol{
 	//dont free this!!!
 	char* string;
-	u_int32_t value,addr;
+	int32_t value,addr;
 
 }symbol;
 

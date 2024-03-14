@@ -287,16 +287,18 @@ void switchOnCPU(int fd,os*system){
 	context* prog=system->proc_vec.processes[system->curr_process];
 	system->proc->curr_pc=prog->curr_pc;
 	while((system->proc->curr_pc>=prog->proc_code_start)&&(system->proc->curr_pc<(prog->proc_allocd_start))){
+		
+		menu(fd,system);
+		
 		u_int32_t value=0;
 		loadValue(system->mem,(system->proc->curr_pc)*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
-
+		
 		execute(system->proc,value);
-
+		dprintf(1,"\n");
 		copyCPUStateToContext(system->proc,prog);
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		menu(fd,system);
 		usleep(100000);
 	}
 		if(!(fd>=1)){

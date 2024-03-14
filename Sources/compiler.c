@@ -13,7 +13,7 @@
 #include "../Includes/decoder.h"
 #include "../Includes/compiler.h"
 
-static u_int32_t code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
+static int32_t code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
 static FILE* fpmid=NULL;
 
 static symbol conv_table[]={
@@ -85,7 +85,7 @@ static int32_t get_next_instruction(FILE* fp,char buff[1024]){
 	int curr_char=0;
 	u_int64_t curr_char_index=0;
 	memset(buff,0,1024);
-	while((curr_char=fgetc(fp))!=';'&&(curr_char)!='\n'&&(curr_char)!=':'&&curr_char !=EOF){
+	while((curr_char=fgetc(fp))!=':'&&(curr_char)!='\n'&&curr_char !=EOF){
 		buff[curr_char_index++]=(char)curr_char;
 	}
 	if(curr_char==EOF){
@@ -204,6 +204,7 @@ static u_int32_t process_instruction(decoder*dec,char buff[1024]){
 	char* ptr=buff;
 	char inst_name[1024]={0};
 	int num_consumed=0;
+	
 	sscanf(ptr,"%s%n",inst_name,&num_consumed);
 	ptr+=num_consumed;
 	symbol* sym;
@@ -216,7 +217,7 @@ static u_int32_t process_instruction(decoder*dec,char buff[1024]){
 
 }
 
-void substitute_names(symbol table[],int instr_pos,char buff[1024],u_int32_t num,u_int32_t relative){
+static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_t num,int32_t relative){
 	
 	int curr_str_len=strlen(buff);
 	if(!curr_str_len){
@@ -250,7 +251,6 @@ void substitute_names(symbol table[],int instr_pos,char buff[1024],u_int32_t num
 
 		if((trip=find_in_name_table(table,curr_token))){
 		if(relative){
-
 			ptr+=snprintf(ptr,128,"%d ",trip->value-num);
 		}
 		else{
@@ -302,7 +302,7 @@ void process_data(char buff[1024]){
 }
 u_int32_t instr_buff_is_space(char buff[1024]){
 	u_int32_t result=1;
-	for(int i=0;(buff[i]!=';')&&(buff[i]!=':')&&(buff[i]!='\n');i++){
+	for(int i=0;(buff[i]!=':')&&(buff[i]!='\n');i++){
 		result=(result&&isspace(buff[i]));
 	}
 	return result;
@@ -316,7 +316,8 @@ void get_all_labels(void){
 	}
 	get_next_instruction(fpmid,buff);
 	if(instr_buff_is_space(buff)){
-		continue;
+		perror("EMPTY LABEL NAME!!!!!\n");
+		raise(SIGINT);
 	}
 	if(buff[strlen(buff)-1]==':'){
 		buff[strlen(buff)-1]=0;
@@ -324,13 +325,12 @@ void get_all_labels(void){
 		p->string=malloc(strlen(buff)+1);
 		memset(p->string,0,strlen(buff)+1);
 		strcpy(p->string,buff);
-		p->value=curr_code-1;
+		p->value=curr_code;
 	}
-	
 	curr_code++;
 	}
 	printf("Labels:\n");
-	for(u_int32_t i=0;i<num_of_labels;i++){
+	for(int32_t i=0;i<num_of_labels;i++){
 		printf("Label: nome: %s, address: %u\n",avail_labels[i].string,avail_labels[i].value);
 	}
 	
@@ -346,10 +346,11 @@ void substitute_all_names(symbol table[],u_int32_t relative){
 	int instr_pos=get_next_instruction(fpmid,buff);
 	if(instr_buff_is_space(buff)){
 
-		continue;
 	}
+	else{
 	substitute_names(table,instr_pos,buff,num,relative);
 	num++;
+	}
 	}
 
 	
@@ -366,7 +367,6 @@ void copyInputFile(FILE* fpin){
 void compile(decoder*dec,FILE* fpin,FILE* fpout){
 	u_int32_t num_of_inst=0;
 
-	//remove(TMP_FILE_NAME);
 	if(!(fpmid=fopen(TMP_FILE_NAME,"w"))){
 		perror("Error opening tmp file while compiling!!!!\n");
 		return;
@@ -400,20 +400,19 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 	for(u_int32_t i=0;i<num_of_inst;i++){
 	get_next_instruction(fpmid,buff);
 	u_int32_t inst=0x0;
-	if(strlen(buff)){
+	if(strlen(buff)&&((buff[strlen(buff)-1]=='\n')||(buff[strlen(buff)-1]==':'))){
 	inst=process_instruction(dec,buff);
-	if(inst){
 	fprintf(fpout,"%x\n",inst);
 	}
 	}
-	}
-	for(u_int32_t i=0;i<num_of_names;i++){
+	for(int32_t i=0;i<num_of_names;i++){
 		free(avail_names[i].string);
 		
 	}
-	for(u_int32_t i=0;i<num_of_labels;i++){
+	for(int32_t i=0;i<num_of_labels;i++){
 		free(avail_labels[i].string);
 		
 	}
 	fclose(fpmid);
+	remove(TMP_FILE_NAME);
 }
