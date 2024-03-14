@@ -15,6 +15,9 @@
 #include "../Includes/cpu.h"
 #include "../Includes/os.h"
 
+static struct timeval tv={TIMEOUT_IN,TIMEOUT_IN_US};
+fd_set filedescs;
+static int print_os=0, print_memory=0,print_cpu=0,print_proc_table=0;
 static void printCPURegs(int fd,cpu* processor){
 	if(fd>=1){
 	
@@ -161,37 +164,97 @@ static void printProcTable(int fd,p_table* procs,cpu*proc){
 }
 static void printOS(int fd,os* system){
 	if(fd>=1){
+	if(print_os){
 	dprintf(fd,"\033[2J");
 	dprintf(fd,"\n-----------------------\n|--State of this os--|\n-----------------------\n");
+	if(print_cpu){
 	printCPU(fd,system->proc);
-	//printProcTable(fd,&(system->proc_vec),system->proc);
-	
+	}
+	if(print_proc_table){
+	printProcTable(fd,&(system->proc_vec),system->proc);
+	}
+	if(print_memory){
+
+	printMemory(fd,system->mem);
+	}
+	}
 	}
 	else{
+	if(print_os){
+	//clear();
 	erase();
 	printw("\n-----------------------\n|--State of this os--|\n-----------------------\n");
+	if(print_cpu){
 	printCPU(fd,system->proc);
-	//printProcTable(fd,&(system->proc_vec),system->proc);
+	}
+	if(print_proc_table){
+	printProcTable(fd,&(system->proc_vec),system->proc);
+	}
+	if(print_memory){
+
+	printMemory(fd,system->mem);
+	}
 	refresh();
+	}
 	}
 }
 
-static void menu(int fd,os*system){
-		int pid=fork();
+static void printThings(int fd,os*system){
+		/*int pid=fork();
 		switch(pid){
 			case -1:
 				endwin();
 				perror("Erro no fork no menu!!!!\n");
-				raise(SIGINT);
+				raise(SIGPIPE);
 				break;
 			case 0:
-				//printMemory(fd,system->mem);
-				printOS(fd,system);
-				raise(SIGINT);
+				raise(SIGPIPE);
 				break;
 			default:
 				break;
 		
+		}*/
+			printOS(fd,system);
+				
+
+}
+
+void menu(int fd){
+		int c;
+		int result;
+		if(fd>=1){
+		FD_ZERO(&filedescs);
+                FD_SET(0,&filedescs);
+		result=select(1,&filedescs,NULL,NULL,&tv);
+		if(result>0){
+		read(0,(char*)&c,1);
+		}
+		}
+		else{
+		c=(int )getch();
+		}
+		switch(c){
+			case 's':
+				print_os=((print_os+1)%2);
+				break;
+			case 'p':
+				print_proc_table=((print_proc_table+1)%2);
+				break;
+			case 'm':
+				
+				print_memory=((print_memory+1)%2);
+				break;
+			case 'c':
+				
+				print_cpu=((print_cpu+1)%2);
+				break;
+			default:
+				break;
+		
+		}
+		if(fd>=1&&result<=0){
+
+			//dprintf(1,"Timeout!!!\n");
 		}
 				
 
@@ -308,14 +371,15 @@ void loadProg(FILE* progfile,os* system){
 	rewind(progfile);
 }
 void switchOnCPU(int fd,os*system){
-	if(system->proc_vec.num_of_processes){
 	if(!(fd>=1)){
 	initscr();
 	start_color();
-	timeout(10);
+	timeout(0);
 	curs_set(0);
 	noecho();
 	}
+	if(system->proc_vec.num_of_processes){
+	
 		
 	context* prog=system->proc_vec.processes[0];
 	system->proc->curr_pc=prog->curr_pc;
@@ -325,7 +389,8 @@ void switchOnCPU(int fd,os*system){
 		u_int32_t value=0;
 		loadValue(system->mem,(system->proc->curr_pc)*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
 		
-		menu(fd,system);
+		menu(fd);
+		printThings(fd,system);
 		execute(system->proc,value);
 		copyCPUStateToContext(system->proc,prog);
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);

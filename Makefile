@@ -1,6 +1,6 @@
 BINARY= processors_sim.exe
 
-LDLIBS=  -lm -lncurses -lncursesw
+LDLIBS=  -lm -lncurses
 INCLUDE= ./Includes .
 SOURCES= . ./Sources
 RESDIR= ./resources

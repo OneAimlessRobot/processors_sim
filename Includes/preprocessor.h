@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -10,4 +11,7 @@
 #include <limits.h>
 #include <time.h>
 #include <signal.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include "defaults.h"
+

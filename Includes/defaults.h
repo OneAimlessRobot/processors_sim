@@ -15,4 +15,7 @@
 
 #define MAX_NUM_OF_WINDOWS 100
 #define MAX_NUM_OF_PROCESSES 100
+
+#define TIMEOUT_IN 0
+#define TIMEOUT_IN_US 10
 #endif

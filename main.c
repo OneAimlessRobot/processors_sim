@@ -18,6 +18,24 @@ void sigint_handler(int param){
 	if(fpcompiled){
 		fclose(fpcompiled);
 	}
+	nocbreak();
+	endwin();
+	getc(stdin);
+	remove(TMP_FILE_NAME);
+	exit(param);
+
+}
+void sigpipe_handler(int param){
+
+	if(sys){
+		endOS(&sys);
+	}
+	if(fpcode){
+		fclose(fpcode);
+	}
+	if(fpcompiled){
+		fclose(fpcompiled);
+	}
 	endwin();
 	remove(TMP_FILE_NAME);
 	exit(param);
@@ -25,6 +43,7 @@ void sigint_handler(int param){
 }
 int main(void){
 	signal(SIGINT,sigint_handler);
+	signal(SIGPIPE,sigpipe_handler);
 	if(!(fpcode=fopen(PROGRAM_FILE_PATH,"r"))){
 
 		perror("Invalid file path!!!\n");
@@ -48,6 +67,32 @@ int main(void){
 	loadProg(fpcompiled,sys);
 	loadProg(fpcompiled,sys);
 	loadProg(fpcompiled,sys);
-	switchOnCPU(0,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	int fd=0;
+	int flags=0;
+	if(fd>=1){
+
+	flags = fcntl(0, F_GETFD);
+    	if (flags == -1){
+		perror("Erro nas flags!!!\n");
+		raise(SIGINT);
+	}
+    	flags |= O_NONBLOCK;
+    	if (fcntl(0, F_SETFD, flags) == -1){
+
+		perror("Erro nas flags!!!\n");
+		raise(SIGINT);
+	
+	}
+
+	}
+	
+	switchOnCPU(fd,sys);
 	raise(SIGINT);
 }
