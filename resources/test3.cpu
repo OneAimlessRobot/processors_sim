@@ -2,42 +2,33 @@
 one_value_reg 2;
 zero_value_reg 1;
 result_reg 9;         // Register to store the result
-num_to_factorial 10;  // Number for which factorial is to be calculated
+num_to_factorial 9;  // Number for which factorial is to be calculated
 fact_param_reg 7;
 mult_param_1_reg 19;
 mult_param_2_reg 18;
 curr_it_reg 3;
 
 .code:
-
 start:
-    // Load initial value 1 into the result register
-    limm result_reg num_to_factorial
-    limm zero_value_reg 0
-    limm one_value_reg 1
-    limm curr_it_reg num_to_factorial
+	limm one_value_reg 1
+	limm zero_value_reg 0
+	limm fact_param_reg num_to_factorial
+	limm result_reg 1
+	add zero_value_reg zero_value_reg zero_value_reg 0 0 0
+	add zero_value_reg zero_value_reg zero_value_reg 0 0 0
+	
+fact_iteration:	
+	add result_reg zero_value_reg mult_param_1_reg 0 0 0
+	add fact_param_reg zero_value_reg mult_param_2_reg 0 0 0
+	sub fact_param_reg one_value_reg fact_param_reg 0 0 0
+	cmp fact_param_reg 0
+	bz end
+	bnz mult
+mult:
+	add result_reg mult_param_1_reg result_reg 0 0 0
+	sub mult_param_2_reg one_value_reg mult_param_2_reg 0 0 0
+	cmp mult_param_2_reg 1
+	bz fact_iteration
+	bnz mult
 
-continue:
-    sub curr_it_reg one_value_reg curr_it_reg 0 0 0
-    add zero_value_reg curr_it_reg fact_param_reg 0 0 0
-    cmp curr_it_reg 0
-    bnz calc_factorial_begin
-    bz end
-
-calc_factorial_begin:
-    // Multiply the current result by the current value
-    add zero_value_reg fact_param_reg mult_param_2_reg 0 0 0
-    add zero_value_reg result_reg mult_param_1_reg 0 0 0
-    sub fact_param_reg one_value_reg fact_param_reg 0 0 0
-    cmp fact_param_reg 0
-    bnz mult_function
-    bz continue
-
-
-mult_function:
-    add result_reg mult_param_1_reg result_reg 0 0 0
-    sub mult_param_2_reg one_value_reg mult_param_2_reg 0 0 0
-    cmp mult_param_2_reg 0
-    bnz mult_function
-    bz call_factorial_begin  
 end:

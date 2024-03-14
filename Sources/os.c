@@ -238,7 +238,7 @@ static void endCtx(context**ctx){
 void loadProg(FILE* progfile,os* system){
 
 	u_int32_t spawned_start_addr=0;
-	u_int32_t spawned_data_size=5;
+	u_int32_t spawned_data_size=0;
 	u_int32_t spawned_allocd_size=20;
 	u_int32_t code_size=0;
 	u_int32_t value=0;
@@ -425,3 +425,4 @@ void endOS(os** system){
 	
 
 }
+

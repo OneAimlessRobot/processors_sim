@@ -92,7 +92,6 @@ void execute(cpu*proc,u_int32_t inst){
 		break;
 
 	}
-	
 	proc->curr_pc++;
 	
 

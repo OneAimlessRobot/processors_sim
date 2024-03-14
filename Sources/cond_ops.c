@@ -67,7 +67,7 @@ switch(code){
 	case CMP:
 	cond_load(&proc->dec,inst,&reg,&value);
 	cmp_result=getProcRegValue(proc,reg,0)-value;
-	proc->status_word|=!(cmp_result);
+	proc->status_word=(!(cmp_result) ?  (proc->status_word | 1) :(proc->status_word & (~1)));
 	break;
 	case BZERO:
 	bz(proc,inst);
