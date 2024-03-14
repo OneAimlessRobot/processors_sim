@@ -164,14 +164,14 @@ static void printOS(int fd,os* system){
 	dprintf(fd,"\033[2J");
 	dprintf(fd,"\n-----------------------\n|--State of this os--|\n-----------------------\n");
 	printCPU(fd,system->proc);
-	printProcTable(fd,&(system->proc_vec),system->proc);
+	//printProcTable(fd,&(system->proc_vec),system->proc);
 	
 	}
 	else{
 	erase();
 	printw("\n-----------------------\n|--State of this os--|\n-----------------------\n");
 	printCPU(fd,system->proc);
-	printProcTable(fd,&(system->proc_vec),system->proc);
+	//printProcTable(fd,&(system->proc_vec),system->proc);
 	refresh();
 	}
 }
@@ -185,6 +185,7 @@ static void menu(int fd,os*system){
 				raise(SIGINT);
 				break;
 			case 0:
+				//printMemory(fd,system->mem);
 				printOS(fd,system);
 				raise(SIGINT);
 				break;
@@ -235,10 +236,39 @@ static void endCtx(context**ctx){
 	}
 
 }
+static int procs_intersect(u_int32_t start,u_int32_t proc_size,context*c2){
+	u_int32_t proc2_size= c2->proc_allocd_end-c2->proc_allocd_start;
+	u_int32_t result=1;
+	if(proc_size>proc2_size){
+		result&=((c2->proc_data_start>=start)||(c2->proc_allocd_end<=(start+proc_size)));
+		
+	}
+	else {
+		result&=((start>=c2->proc_data_start)||((start+proc_size)<=c2->proc_allocd_end));
+		
+	}
+	
+	return result;
+
+}
+static int32_t check_fit_memory_addr(os*system,u_int32_t proc_size){
+	u_int32_t pos=0;
+	for(u_int32_t i=0;i<system->proc_vec.num_of_processes;i++){
+		context* cmp_ctx=system->proc_vec.processes[i];
+			if(!procs_intersect(pos,proc_size,cmp_ctx)){
+			break;
+			}
+			pos=cmp_ctx->proc_allocd_end+1;
+			
+	}
+	printf("Pos: %d\n",pos);
+	return pos;
+
+}
 void loadProg(FILE* progfile,os* system){
 
 	u_int32_t spawned_start_addr=0;
-	u_int32_t spawned_data_size=0;
+	u_int32_t spawned_data_size=5;
 	u_int32_t spawned_allocd_size=20;
 	u_int32_t code_size=0;
 	u_int32_t value=0;
@@ -255,10 +285,11 @@ void loadProg(FILE* progfile,os* system){
 		raise(SIGINT);
 
 	}
+	spawned_start_addr=check_fit_memory_addr(system,proc_size);
 	rewind(progfile);
 	addCtx(system,spawned_start_addr,spawned_data_size,spawned_allocd_size);
-	context*ctx=system->proc_vec.processes[system->curr_process];
-	memset(system->mem->contents+(ctx->proc_data_start*WORD_SIZE),0xFF,(ctx->proc_data_size)*WORD_SIZE);
+	context*ctx=system->proc_vec.processes[system->proc_vec.num_of_processes-1];
+	memset(system->mem->contents+(ctx->proc_data_start*WORD_SIZE),0x0,(ctx->proc_data_size)*WORD_SIZE);
 	ctx->proc_code_start=ctx->proc_data_start+ctx->proc_data_size;
 	u_int32_t curr_cell=ctx->proc_code_start;
 	curr_cell=ctx->proc_code_start;
@@ -270,10 +301,11 @@ void loadProg(FILE* progfile,os* system){
 	}
 	
 	ctx->proc_allocd_start=curr_cell;
-	memset(system->mem->contents+(ctx->proc_allocd_start*WORD_SIZE),0xFF,(ctx->proc_allocd_size)*WORD_SIZE);
+	memset(system->mem->contents+(ctx->proc_allocd_start*WORD_SIZE),0x0,(ctx->proc_allocd_size)*WORD_SIZE);
 	ctx->proc_allocd_end=ctx->proc_allocd_start+ctx->proc_allocd_size;
 	system->avail_memory-=proc_size;
 	ctx->curr_pc=ctx->proc_code_start;
+	rewind(progfile);
 }
 void switchOnCPU(int fd,os*system){
 	if(system->proc_vec.num_of_processes){
@@ -284,22 +316,22 @@ void switchOnCPU(int fd,os*system){
 	curs_set(0);
 	noecho();
 	}
-	context* prog=system->proc_vec.processes[system->curr_process];
+		
+	context* prog=system->proc_vec.processes[0];
 	system->proc->curr_pc=prog->curr_pc;
 	while((system->proc->curr_pc>=prog->proc_code_start)&&(system->proc->curr_pc<(prog->proc_allocd_start))){
 		
-		menu(fd,system);
 		
 		u_int32_t value=0;
 		loadValue(system->mem,(system->proc->curr_pc)*WORD_SIZE,(u_int32_t)sizeof(value),(void*) &value);
 		
+		menu(fd,system);
 		execute(system->proc,value);
-		dprintf(1,"\n");
 		copyCPUStateToContext(system->proc,prog);
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		usleep(100000);
+		usleep(10000);
 	}
 		if(!(fd>=1)){
 		endwin();
@@ -414,7 +446,6 @@ void endOS(os** system){
 		
 		if((*system)->proc_vec.processes[i]){
 			endCtx(&((*system)->proc_vec.processes[i]));
-			(*system)->proc_vec.num_of_processes--;
 		}
 	
 	}

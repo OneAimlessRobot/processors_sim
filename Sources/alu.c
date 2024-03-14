@@ -41,19 +41,15 @@ process_alu_op(&proc->dec,inst,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,
 u_int32_t value1=getProcRegValue(proc,alureg1,reg1size),value2=getProcRegValue(proc,alureg2,reg2size);
 switch(code){
 	case ADD:
-		dprintf(1,"Add!!!!");
 		storeValueReg(proc,aludstreg,dstsize,value1+value2,0);
 	break;
 	case SUB:
-		dprintf(1,"Sub!!!!");
 		storeValueReg(proc,aludstreg,dstsize,value1-value2,0);
 	break;
 	case OR:
-		dprintf(1,"Or!!!!");
 		storeValueReg(proc,aludstreg,dstsize,value1|value2,0);
 	break;
 	case AND:
-		dprintf(1,"And!!!!");
 		storeValueReg(proc,aludstreg,dstsize,value1&value2,0);
 	break;
 	default:

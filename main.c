@@ -18,7 +18,8 @@ void sigint_handler(int param){
 	if(fpcompiled){
 		fclose(fpcompiled);
 	}
-	//remove(TMP_FILE_NAME);
+	endwin();
+	remove(TMP_FILE_NAME);
 	exit(param);
 
 }
@@ -42,6 +43,11 @@ int main(void){
 		raise(SIGINT);
 	}
 	loadProg(fpcompiled,sys);
-	switchOnCPU(1,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	loadProg(fpcompiled,sys);
+	switchOnCPU(0,sys);
 	raise(SIGINT);
 }

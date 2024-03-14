@@ -414,5 +414,4 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 		
 	}
 	fclose(fpmid);
-	remove(TMP_FILE_NAME);
 }
