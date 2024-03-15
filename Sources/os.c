@@ -415,16 +415,16 @@ void switchOnCPU(int fd,os*system){
 		
 		menu(fd);
 		
+		usleep(1000000);
 		printThings(fd,system);
 		execute(system->proc);
 		copyCPUStateToContext(system->proc,prog);
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		usleep(1000000);
 	}
-		usleep(1000000);
 		printThings(fd,system);
+		usleep(1000000);
 		if(!(fd>=1)){
 		endwin();
 		}
