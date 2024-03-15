@@ -55,14 +55,15 @@ int main(void){
 		exit(-1);
 	}
 	sys=spawnOS();
-	compile(&sys->proc->dec,fpcode,fpcompiled);
+	compile(sys->proc->dec2,fpcode,fpcompiled);
 	fclose(fpcompiled);
 	if(!(fpcompiled=fopen(INSTR_FILE_PATH,"r"))){
+		fclose(fpcode);
 		perror("Invalid file path!!!\n");
 		raise(SIGINT);
 	}
-	loadProg(fpcompiled,sys);
-	int fd=1;
+	
+	int fd=0;
 	int flags=0;
 	if(fd>=1){
 
@@ -80,7 +81,8 @@ int main(void){
 	}
 
 	}
-	
+	loadProg(fpcompiled,sys);
 	switchOnCPU(fd,sys);
+	
 	raise(SIGINT);
 }

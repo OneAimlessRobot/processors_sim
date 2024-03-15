@@ -16,13 +16,69 @@ FILE* fp=NULL;
 		return 0;
 
 	}
-
-	skip_cpu_comments(fp);
+	
+	if(!fscanf(fp,"%d",&dec->instr_num)){
+		fclose(fp);
+		return 0;
+	}
+	
 	if(!fscanf(fp,"%x",&dec->op_code_mask)){
 		fclose(fp);
 		return 0;
 	}
 	
+	dec->instructs= malloc(sizeof(instr_info)*dec->instr_num);
+	for(u_int32_t i=0;i<dec->instr_num;i++){
+		
+		if(!fscanf(fp,"%u",&dec->instructs[i].arg_num)){
+			fclose(fp);
+			return 0;
+		}
+		dprintf(1,"Cheguei ao numero de argumentos deste grupo!!!\n");
+			
+		dec->instructs[i].masks=malloc(sizeof(u_int32_t)*dec->instructs[i].arg_num);
+		for(u_int32_t j=0;j<dec->instructs[i].arg_num;j++){
+			
+		if(!fscanf(fp,"%x",&dec->instructs[i].masks[j])){
+			
+			fclose(fp);
+			return 0;
+		}
+		dprintf(1,"Cheguei a mascara do argumento numero %d deste grupo!!!\n",j);
+		}
+		if(!fscanf(fp,"%u",&dec->instructs[i].num_group_ops)){
+			fclose(fp);
+			return 0;
+		}
+		dprintf(1,"Cheguei ao numero de ops deste grupo!!!\n");
+		dec->instructs[i].headers=malloc(sizeof(instr_header)*dec->instructs[i].num_group_ops);
+
+		for(u_int32_t j=0;j<dec->instructs[i].num_group_ops;j++){
+			
+		if(!fscanf(fp,"%ms %x",&dec->instructs[i].headers[j].instr_name,&dec->instructs[i].headers[j].instr_code)){
+			fclose(fp);
+			return 0;
+		}
+		dprintf(1,"Cheguei a op numero %d deste grupo!!!\n",j);
+		}
+	}
+	for(u_int32_t i=0;i<dec->instr_num;i++){
+		
+		dprintf(1,"Grupo %u:\nMascaras:\n\n",i);
+		for(u_int32_t j=0;j<dec->instructs[i].arg_num;j++){
+			
+		printWord(1,dec->instructs[i].masks[j]);
+		dprintf(1,"\n");
+		}
+		
+		dprintf(1,"Numero de operaçoes %u:\n",dec->instructs[i].num_group_ops);
+
+		for(u_int32_t j=0;j<dec->instructs[i].num_group_ops;j++){
+
+		dprintf(1,"\n\nOperaçao %u:\nNome: %s\nCodigo: %x\n\n",j,dec->instructs[i].headers[j].instr_name,dec->instructs[i].headers[j].instr_code);
+
+		}
+	}
 	
 	skip_cpu_comments(fp);
 	if(!fscanf(fp,"%x",&dec->arith.alu_oper_1_mask)){
@@ -149,9 +205,104 @@ FILE* fp=NULL;
 	dprintf(1,"\n");
 	fclose(fp);
 	return 1;
+	
 
 }
+instr_info* find_instr_with_code(decoder* dec,u_int32_t code){
+	for(u_int32_t i=0;i<dec->instr_num;i++){
 
+		for(u_int32_t j=0;j<dec->instructs[i].num_group_ops;j++){
+			if(code==dec->instructs[i].headers[j].instr_code){
+
+			return &dec->instructs[i];
+
+		}
+		}
+
+	}
+	dprintf(1,"Codigo de Instrucao inexistente %x\n",code);
+	return NULL;
+	
+
+}
+instr_info* find_instr_with_name(decoder* dec,char* name){
+	for(u_int32_t i=0;i<dec->instr_num;i++){
+
+		
+		for(u_int32_t j=0;j<dec->instructs[i].num_group_ops;j++){
+			if(strings_are_equal(dec->instructs[i].headers[j].instr_name,name)){
+
+			return &dec->instructs[i];
+
+		}
+		}
+
+	}
+	dprintf(1,"Nome de Instrucao inexistente %s\n",name);
+	return NULL;
+	
+
+}
+void freeDecoder(decoder**dec){
+	if(*dec){
+	u_int32_t num_of_instr=(*dec)->instr_num;
+	if((*dec)->instructs){
+	for(u_int32_t i=0;i<num_of_instr;i++){
+		
+	
+	if((*dec)->instructs[i].headers){
+		
+		for(u_int32_t j=0;j<(*dec)->instructs[i].num_group_ops;j++){
+		if((*dec)->instructs[i].headers[j].instr_name){
+		free((*dec)->instructs[i].headers[j].instr_name);
+		(*dec)->instructs[i].headers[j].instr_name=NULL;
+		}
+	}
+		free((*dec)->instructs[i].headers);
+		(*dec)->instructs[i].headers=NULL;
+	}
+	if((*dec)->instructs[i].masks){
+		free((*dec)->instructs[i].masks);
+		(*dec)->instructs[i].masks=NULL;
+		}
+	
+	}
+	free((*dec)->instructs);
+	(*dec)->instructs=NULL;
+	}
+	free(*dec);
+	*dec=NULL;
+	
+	}
+
+
+}
+u_int32_t get_op_code_inside_group(instr_info* info,char* string){
+	for(u_int32_t i=0;i<info->num_group_ops;i++){
+		if(strings_are_equal(string,info->headers[i].instr_name)){
+			
+			return info->headers[i].instr_code;
+			
+		}
+
+	}
+	return 0;
+
+
+}
+char* get_op_name_inside_group(instr_info* info,u_int32_t code){
+	for(u_int32_t i=0;i<info->num_group_ops;i++){
+		if(code==info->headers[i].instr_code){
+			
+			return info->headers[i].instr_name;
+			
+		}
+
+	}
+	return NULL;
+
+
+}
 instr_type get_instr_type(op_code code){
 
 

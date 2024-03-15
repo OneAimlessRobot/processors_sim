@@ -15,7 +15,7 @@
 
 static int32_t curr_code_2=0, code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
 static FILE* fpmid=NULL;
-
+static decoder* priv_dec=NULL;
 static symbol conv_table[]={
 					{"add",ADD,0},
 					{"sub",SUB,0},
@@ -48,16 +48,6 @@ static u_int32_t mask_photograph(u_int32_t mask,u_int32_t value){
 	result<<=advance;
 	return result;
 	
-
-}
-static int strings_are_equal(char* str1,char* str2){
-	
-	int same_length=!(strlen(str1)-strlen(str2));
-	
-	int same_content= !strncmp(str1,str2,strlen(str1));
-	return same_content&&same_length;
-	
-
 
 }
 
@@ -100,77 +90,27 @@ static int32_t get_next_instruction(FILE* fp,char buff[1024]){
 	return init_of_instr;
 	
 }
-static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
+static u_int32_t decypher_instruction(u_int32_t code,instr_info *sym,char* buff){
 	u_int32_t result=0x0;
-	u_int32_t alu1=0,alu2=0,alu3=0,alu4=0,alu5=0,alu6=0;
-	int32_t mem1=0,mem3=0,mem4=0;
-	int16_t mem2=0;
-	u_int32_t loadimm_reg=0,loadimm_value=0;
-	u_int32_t cmp_reg=0,cmp_value=0;
-	u_int32_t stack_reg=0;
-	int16_t cond_addr=0;
-	instr_type type=get_instr_type(code);
-	
 	result|=code;
-	switch(type){
-		case ALU:
-		if(!sscanf(buff,"%u%u%u%u%u%u",&alu1,&alu2,&alu3,&alu4,&alu5,&alu6)){
-			perror("Compiling error!!!!! bad instruction syntax in add!!!!\nNULL instruction loaded!\n");
-			return result;
-		}
-		result|=mask_photograph(dec->arith.alu_oper_1_mask,alu1);
-		result|=mask_photograph(dec->arith.alu_oper_2_mask,alu2);
-		result|=mask_photograph(dec->arith.alu_dst_mask,alu3);
+	char* ptr= buff;
 	
-		result|=mask_photograph(dec->arith.alu_op_size_mask,alu4);
-		result|=mask_photograph(dec->arith.alu_op2_size_mask,alu5);
-		result|=mask_photograph(dec->arith.alu_dest_size_mask,alu6);
-		
-			break;
-		case MEM:
-		if(!sscanf(buff,"%d%hd%d%d",&mem1,&mem2,&mem3,&mem4)){
-			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
+	for(u_int32_t i=0;i<sym->arg_num;i++){
+		int16_t arg=0x0;
+		int advance=0;
+		if(!sscanf(ptr,"%hd%n",&arg,&advance)){
+			
+			dprintf(1,"Compiling error!!!!! bad instruction syntax in instruction of code%x!!!!\nNULL instruction loaded!\n",code);
 			return result;
 		}
-		result|=mask_photograph(dec->mem.mem_reg_mask,mem1);
-		result|=mask_photograph(dec->mem.mem_addr_reg_mask,mem2);
-		result|=mask_photograph(dec->mem.mem_reg_type_mask,mem3);
-		result|=mask_photograph(dec->mem.mem_size_mask,mem4);
-			break;
-		case STACK:
-		if(!sscanf(buff,"%u",&stack_reg)){
-			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
-			return result;
-		}
-		result|=mask_photograph(dec->mem.stack_reg_mask,stack_reg);
-			break;
-		case IMM:
-		if(!sscanf(buff,"%u%u",&loadimm_reg,&loadimm_value)){
-			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
-			return result;
-		}
-		result|=mask_photograph(dec->load_imm_dst_mask,loadimm_reg);
-		result|=mask_photograph(dec->load_imm_oper_mask,loadimm_value);
-		break;
-		case COND:
-		if(!sscanf(buff,"%u%u",&cmp_reg,&cmp_value)){
-			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
-			return result;
-		}
-		result|=mask_photograph(dec->arith.cmp_reg_mask,cmp_reg);
-		result|=mask_photograph(dec->arith.cmp_value_mask,cmp_value);
-		
-			break;
-		case CONTROL:
-		if(!sscanf(buff,"%hd",&cond_addr)){
-			perror("Compiling error!!!!! bad instruction syntax in jmp!!!!\nNULL instruction loaded!\n");
-			return result;
-		}
-		result|=mask_photograph(dec->mem.jmp_addr_mask,cond_addr);
-			break;
+		if(code==LMEMR){
 
-		
+		dprintf(1,"Arg neste load relativo: %hd\n Numero de argumentos: %u\nIteraçao neste instrucao: %u\n",arg,sym->arg_num,i);
+		}
+		result|=mask_photograph(sym->masks[i],arg);
+		ptr+=advance;
 	}
+
 	return result;
 
 }
@@ -214,18 +154,18 @@ fseek(fp, pos2, SEEK_SET);
 }
 static u_int32_t process_instruction(decoder*dec,char buff[1024]){
 	char* ptr=buff;
-	char inst_name[1024]={0};
+	char instr_name[1024]={0};
 	int num_consumed=0;
 	
-	sscanf(ptr,"%s%n",inst_name,&num_consumed);
+	sscanf(ptr,"%s%n",instr_name,&num_consumed);
 	ptr+=num_consumed;
-	symbol* sym;
+	instr_info* sym=NULL;
 	u_int32_t code=0x0;
-	if((sym=find_in_name_table(conv_table,inst_name))){
-	code=sym->value;
+	if(!(sym=find_instr_with_name(dec,instr_name))){
+		return 0;
 	}
-
-	return decypher_instruction(dec,code,ptr);
+	code=get_op_code_inside_group(sym,instr_name);
+	return decypher_instruction(code,sym,ptr);
 
 }
 
@@ -256,7 +196,7 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 	}
 		symbol* trip=NULL;
 		
-		if(ntokens==1&&!find_in_name_table(conv_table,curr_token)){
+		if(ntokens==1&&!find_instr_with_name(priv_dec,curr_token)){
 				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
 				raise(SIGINT);
 		}
@@ -325,7 +265,7 @@ void process_data(char buff[1024],FILE* fpout){
 }
 u_int32_t instr_buff_is_space(char buff[1024]){
 	u_int32_t result=1;
-	for(int i=0;(buff[i]!=':')&&(buff[i]!='\n');i++){
+	for(u_int32_t i=0;(i<strlen(buff))&&(buff[i]!=':')&&(buff[i]!='\n');i++){
 		result=(result&&isspace(buff[i]));
 	}
 	return result;
@@ -388,7 +328,7 @@ void copyInputFile(FILE* fpin){
 }
 void compile(decoder*dec,FILE* fpin,FILE* fpout){
 	u_int32_t num_of_inst=0;
-
+	priv_dec=dec;
 	if(!(fpmid=fopen(TMP_FILE_NAME,"w"))){
 		perror("Error opening tmp file while compiling!!!!\n");
 		return;

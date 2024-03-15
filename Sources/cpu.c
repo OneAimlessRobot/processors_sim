@@ -77,14 +77,14 @@ void popValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
 }
 static void load_imm(cpu*proc){
 	u_int8_t dest=0;
-	int16_t value=proc->instr_reg&proc->dec.load_imm_oper_mask;
-	u_int32_t unprocessed_dest=proc->instr_reg&proc->dec.load_imm_dst_mask;
-	unprocessed_dest>>=firstBitOne(proc->dec.load_imm_dst_mask);
+	int16_t value=proc->instr_reg&proc->dec2->load_imm_oper_mask;
+	u_int32_t unprocessed_dest=proc->instr_reg&proc->dec2->load_imm_dst_mask;
+	unprocessed_dest>>=firstBitOne(proc->dec2->load_imm_dst_mask);
 	dest|=unprocessed_dest;
 	storeValueReg(proc,dest,HALF,value,0);
 }
 void execute(cpu*proc){
-	op_code code=proc->instr_reg&proc->dec.op_code_mask;
+	op_code code=proc->instr_reg&proc->dec2->op_code_mask;
 	instr_type type=get_instr_type(code);
 	u_int32_t init_pc=proc->curr_pc;
 	switch(type){

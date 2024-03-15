@@ -464,10 +464,15 @@ static void endCPU(cpu** processor){
 		free((*processor)->wins);
         
 	}
+	if((*processor)->dec2){
+
+		freeDecoder(&(*processor)->dec2);
+		(*processor)->dec2=NULL;
+	}
+	}
 		free(*processor);
         	*processor=NULL;
-
-	}
+	
 
 }
 
@@ -502,12 +507,12 @@ static cpu* spawnCPU(void){
 	fclose(fp);
 	result->reg_file= (u_int8_t*)malloc(result->reg_file_size*WORD_SIZE);
 	memset(result->reg_file,0,result->reg_file_size*WORD_SIZE);
-	if(!load_cpu_masks(&result->dec)){
+	result->dec2=malloc(sizeof(decoder));
+	if(!load_cpu_masks(result->dec2)){
 
 		perror("INVALID INPUT AT DECODER CONFIG FILE!!!!!\n");
 		endCPU(&result);
 	}
-
 	result->curr_wp=0;
 	result->wins= malloc(sizeof(reg_window)*MAX_NUM_OF_WINDOWS);
 	memset(result->wins,0,sizeof(reg_window)*MAX_NUM_OF_WINDOWS);

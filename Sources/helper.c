@@ -8,6 +8,15 @@
 #include <stdint.h>
 #include "../Includes/defaults.h"
 #include "../Includes/helper.h"
+
+int strings_are_equal(char* str1,char* str2){
+
+         int same_length=!(strlen(str1)-strlen(str2));
+
+         int same_content= !strncmp(str1,str2,strlen(str1));
+         return same_content&&same_length;
+}
+
 void printWordNcurses(u_int32_t line){
  u_int32_t mask=0x80000000;
         for(u_int32_t i=0;i<WORD_BITS;i++){

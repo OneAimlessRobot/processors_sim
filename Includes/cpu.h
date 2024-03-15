@@ -18,7 +18,7 @@ typedef struct cpu{
 	u_int32_t curr_pc,prev_pc;
 	
 	decoder dec;
-	
+	decoder* dec2;
 	reg_window* wins;
 	
 	u_int8_t curr_wp;

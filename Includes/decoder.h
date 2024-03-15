@@ -21,10 +21,27 @@ typedef enum {ADD=0x10000000,
 			}op_code;
 
 #define OP_CODE_MASK 0xF0000000
+//allways free instr_name
+typedef struct instr_header{
+	char * instr_name;
+	u_int32_t instr_code;
+
+
+}instr_header;
+//masks has len= header.arg_num
+//free masks;
+typedef struct instr_info{
+	u_int32_t num_group_ops;
+	u_int32_t arg_num;
+	instr_header* headers;
+	u_int32_t* masks;
+
+
+}instr_info;
+
 typedef struct code_control_unit{
-	
 	u_int32_t z_flag_mask;
-	
+
 }code_control_unit;
 typedef struct mmu{
 
@@ -54,15 +71,21 @@ typedef struct alu{
 
 typedef struct decoder{
 
+	u_int32_t instr_num;
 	u_int32_t op_code_mask;
+	instr_info* instructs;
 	alu arith;
 	mmu mem;
 	code_control_unit ccu;
-	u_int32_t load_imm_dst_mask,
-		load_imm_oper_mask;
-
-
+	u_int32_t load_imm_oper_mask,
+		load_imm_dst_mask;
 }decoder;
+
 int load_cpu_masks(decoder*dec);
 instr_type get_instr_type(op_code code);
+void freeDecoder(decoder**dec);
+instr_info* find_instr_with_name(decoder* dec,char* name);
+instr_info* find_instr_with_code(decoder* dec,u_int32_t code);
+char* get_op_name_inside_group(instr_info* info,u_int32_t code);
+u_int32_t get_op_code_inside_group(instr_info* info,char* string);
 #endif

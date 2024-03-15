@@ -39,28 +39,30 @@ int16_t addr;
 u_int32_t stack_value_reg,stack_dest_reg;
 switch(code){
 	case STO:
-		process_mem_op(&proc->dec,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
+		process_mem_op(proc->dec2,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
 		addr=getProcRegValue(proc,memaddrreg,memregtype);
 		storeMemValue(proc,memregval,addr,memregtype,0);
 		break;
 	case LMEM:
-		process_mem_op(&proc->dec,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
+		process_mem_op(proc->dec2,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
 		addr=getProcRegValue(proc,memaddrreg,memregtype);
 		loadMemValue(proc,memregval,addr,memregtype,0);
+		
 		break;
 	case LMEMR:
-		process_mem_op(&proc->dec,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
+		process_mem_op(proc->dec2,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
 		addr=(int16_t)getProcRegValue(proc,memaddrreg,memregtype);
 		loadMemValue(proc,memregval,proc->curr_pc+addr,memregtype,0);
+		
 		break;
 	case PUSH:
-		process_stack_op(&proc->dec,proc->instr_reg,&stack_value_reg);
+		process_stack_op(proc->dec2,proc->instr_reg,&stack_value_reg);
 		pushValue(proc,stack_value_reg,0,0);
 		proc->stack_pointer--;
 		break;
 	case POP:
 		proc->stack_pointer++;
-		process_stack_op(&proc->dec,proc->instr_reg,&stack_dest_reg);
+		process_stack_op(proc->dec2,proc->instr_reg,&stack_dest_reg);
 		popValue(proc,stack_dest_reg,0,0);
 		break;
 	default:
