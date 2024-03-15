@@ -10,7 +10,7 @@ curr_it_reg 3;
 
 .code:
 start:
-	limm one_value_reg 1
+	load one_value_reg 1
 	limm zero_value_reg 0
 	limm fact_param_reg num_to_factorial
 	limm result_reg 1

@@ -14,9 +14,9 @@
 #include "../Includes/cond_ops.h"
 #include "../Includes/mem_ops.h"
 
-u_int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_portion_mask){
+int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_portion_mask){
 	u_int8_t word_size=(WORD_SIZE>>reg_portion_mask);
-	u_int32_t rawvalue=*(u_int32_t*)(&proc->reg_file[regIndex*WORD_SIZE]);
+	int32_t rawvalue=*(int32_t*)(&proc->reg_file[regIndex*WORD_SIZE]);
 	u_int32_t mask=0xFFFFFFFF;
 	mask>>=((BYTE_BITS*WORD_SIZE)-(BYTE_BITS*word_size));
 	return rawvalue&mask;
@@ -25,7 +25,7 @@ u_int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_portion_mask
 static u_int8_t calculateAddr(u_int32_t*baseaddr,reg_type type,u_int8_t reg_addr){
 u_int8_t word_size=(WORD_SIZE>>type);
    (*baseaddr)*=WORD_SIZE;
-   u_int32_t base =*baseaddr;
+   int32_t base =*baseaddr;
 	switch(type){
     case HALF:
 	reg_addr&=1;
@@ -61,33 +61,50 @@ void storeMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_in
        memcpy(proc->running_system->mem->contents + (basemem),proc->reg_file + base, word_size);
 
 }
-static void load_imm(cpu*proc,u_int32_t inst){
+void pushValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
+   u_int8_t word_size=calculateAddr(&base,type,reg_addr);
+    u_int32_t true_sp=proc->stack_pointer;
+   calculateAddr(&proc->stack_pointer,type,reg_addr);
+   memcpy(proc->running_system->mem->contents + proc->stack_pointer,proc->reg_file + base,word_size);
+   proc->stack_pointer=true_sp;
+}
+void popValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
+   u_int8_t word_size=calculateAddr(&base,type,reg_addr);
+   u_int32_t true_sp=proc->stack_pointer;
+   calculateAddr(&proc->stack_pointer,type,reg_addr);
+       memcpy(proc->reg_file + base,proc->running_system->mem->contents + proc->stack_pointer, word_size);
+   proc->stack_pointer=true_sp;
+}
+static void load_imm(cpu*proc){
 	u_int8_t dest=0;
-	u_int32_t value=inst&proc->dec.load_imm_oper_mask;
-	u_int32_t unprocessed_dest=inst&proc->dec.load_imm_dst_mask;
+	int16_t value=proc->instr_reg&proc->dec.load_imm_oper_mask;
+	u_int32_t unprocessed_dest=proc->instr_reg&proc->dec.load_imm_dst_mask;
 	unprocessed_dest>>=firstBitOne(proc->dec.load_imm_dst_mask);
 	dest|=unprocessed_dest;
-	storeValueReg(proc,dest,0,value,0);
+	storeValueReg(proc,dest,HALF,value,0);
 }
-void execute(cpu*proc,u_int32_t inst){
-	op_code code=inst&proc->dec.op_code_mask;
+void execute(cpu*proc){
+	op_code code=proc->instr_reg&proc->dec.op_code_mask;
 	instr_type type=get_instr_type(code);
 	u_int32_t init_pc=proc->curr_pc;
 	switch(type){
 		case ALU:
-		proc_alu_op(proc,code,inst);
+		proc_alu_op(proc,code);
+		break;
+		case STACK:
+		proc_mem_op(proc,code);
 		break;
 		case MEM:
-		proc_mem_op(proc,code,inst);
+		proc_mem_op(proc,code);
 		break;
 		case IMM:
-		load_imm(proc,inst);
+		load_imm(proc);
 		break;
 		case COND:
-		proc_cond_op(proc,code,inst);
+		proc_cond_op(proc,code);
 		break;
 		case CONTROL:
-		proc_cond_op(proc,code,inst);
+		proc_cond_op(proc,code);
 		break;
 		default:
 		break;

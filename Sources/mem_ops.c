@@ -25,16 +25,43 @@ static void process_mem_op(decoder*dec,u_int32_t inst,u_int32_t* reg,u_int32_t*a
 	(*reg_type)|=unprocessed_reg_type;
 }
 
-void proc_mem_op(cpu*proc,op_code code,u_int32_t inst){
-u_int32_t memregval,memaddrreg,memregtype,addr;
-process_mem_op(&proc->dec,inst,&memregval,&memaddrreg,&memregtype);
-addr=getProcRegValue(proc,memaddrreg,memregtype);
+static void process_stack_op(decoder*dec,u_int32_t inst,u_int32_t* reg){
+
+	*reg=0;
+	u_int32_t unprocessed_reg=inst&dec->mem.stack_reg_mask;
+	unprocessed_reg>>=firstBitOne(dec->mem.stack_reg_mask);
+	(*reg)|=unprocessed_reg;
+}
+
+void proc_mem_op(cpu*proc,op_code code){
+u_int32_t memregval,memaddrreg,memregtype;
+int16_t addr;
+u_int32_t stack_value_reg,stack_dest_reg;
 switch(code){
 	case STO:
+		process_mem_op(&proc->dec,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
+		addr=getProcRegValue(proc,memaddrreg,memregtype);
 		storeMemValue(proc,memregval,addr,memregtype,0);
 		break;
 	case LMEM:
+		process_mem_op(&proc->dec,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
+		addr=getProcRegValue(proc,memaddrreg,memregtype);
 		loadMemValue(proc,memregval,addr,memregtype,0);
+		break;
+	case LMEMR:
+		process_mem_op(&proc->dec,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
+		addr=(int16_t)getProcRegValue(proc,memaddrreg,memregtype);
+		loadMemValue(proc,memregval,proc->curr_pc+addr,memregtype,0);
+		break;
+	case PUSH:
+		process_stack_op(&proc->dec,proc->instr_reg,&stack_value_reg);
+		pushValue(proc,stack_value_reg,0,0);
+		proc->stack_pointer--;
+		break;
+	case POP:
+		proc->stack_pointer++;
+		process_stack_op(&proc->dec,proc->instr_reg,&stack_dest_reg);
+		popValue(proc,stack_dest_reg,0,0);
 		break;
 	default:
 		break;

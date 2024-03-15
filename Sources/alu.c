@@ -35,9 +35,9 @@ static void process_alu_op(decoder*dec,u_int32_t inst,u_int32_t* reg1,u_int32_t*
 	(*destsize)|=unprocessed_destsize;
 }
 
-void proc_alu_op(cpu*proc,op_code code,u_int32_t inst){
+void proc_alu_op(cpu*proc,op_code code){
 u_int32_t alureg1,alureg2,aludstreg,reg1size,reg2size,dstsize;
-process_alu_op(&proc->dec,inst,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,&dstsize);
+process_alu_op(&proc->dec,proc->instr_reg,&alureg1,&alureg2,&aludstreg,&reg1size,&reg2size,&dstsize);
 u_int32_t value1=getProcRegValue(proc,alureg1,reg1size),value2=getProcRegValue(proc,alureg2,reg2size);
 switch(code){
 	case ADD:

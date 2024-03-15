@@ -13,7 +13,7 @@
 #include "../Includes/decoder.h"
 #include "../Includes/compiler.h"
 
-static int32_t code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
+static int32_t curr_code_2=0, code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
 static FILE* fpmid=NULL;
 
 static symbol conv_table[]={
@@ -22,6 +22,7 @@ static symbol conv_table[]={
 					{"or",OR,0},
 					{"and",AND,0},
 					{"load",LMEM,0},
+					{"loadr",LMEMR,0},
 					{"limm",LIMM,0},
 					{"store",STO,0},
 					{"jmp",JMP,0},
@@ -29,6 +30,8 @@ static symbol conv_table[]={
 					{"cmp",CMP,0},
 					{"bz",BZERO,0},
 					{"bnz",BNZERO,0},
+					{"push",PUSH,0},
+					{"pop",POP,0},
 					{NULL,0,0},
 			};
 
@@ -100,9 +103,11 @@ static int32_t get_next_instruction(FILE* fp,char buff[1024]){
 static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
 	u_int32_t result=0x0;
 	u_int32_t alu1=0,alu2=0,alu3=0,alu4=0,alu5=0,alu6=0;
-	u_int32_t mem1=0,mem2=0,mem3=0,mem4=0;
+	int32_t mem1=0,mem3=0,mem4=0;
+	int16_t mem2=0;
 	u_int32_t loadimm_reg=0,loadimm_value=0;
 	u_int32_t cmp_reg=0,cmp_value=0;
+	u_int32_t stack_reg=0;
 	int16_t cond_addr=0;
 	instr_type type=get_instr_type(code);
 	
@@ -123,7 +128,7 @@ static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
 		
 			break;
 		case MEM:
-		if(!sscanf(buff,"%u%u%u%u",&mem1,&mem2,&mem3,&mem4)){
+		if(!sscanf(buff,"%d%hd%d%d",&mem1,&mem2,&mem3,&mem4)){
 			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
 			return result;
 		}
@@ -131,6 +136,13 @@ static u_int32_t decypher_instruction(decoder*dec,u_int32_t code,char* buff){
 		result|=mask_photograph(dec->mem.mem_addr_reg_mask,mem2);
 		result|=mask_photograph(dec->mem.mem_reg_type_mask,mem3);
 		result|=mask_photograph(dec->mem.mem_size_mask,mem4);
+			break;
+		case STACK:
+		if(!sscanf(buff,"%u",&stack_reg)){
+			perror("Compiling error!!!!! bad instruction syntax in store!!!!\nNULL instruction loaded!\n");
+			return result;
+		}
+		result|=mask_photograph(dec->mem.stack_reg_mask,stack_reg);
 			break;
 		case IMM:
 		if(!sscanf(buff,"%u%u",&loadimm_reg,&loadimm_value)){
@@ -251,7 +263,7 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 
 		if((trip=find_in_name_table(table,curr_token))){
 		if(relative){
-			ptr+=snprintf(ptr,128,"%d ",trip->value-num);
+			ptr+=snprintf(ptr,128,"%d ",trip->addr-num);
 		}
 		else{
 			ptr+=snprintf(ptr,128,"%d ",trip->value);
@@ -271,8 +283,9 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 
 }
 
-void process_data(char buff[1024]){
-
+void process_data(char buff[1024],FILE* fpout){
+	
+	
 	do{
 	get_next_instruction(fpmid,buff);
 	code_data_start=ftell(fpmid);
@@ -280,15 +293,17 @@ void process_data(char buff[1024]){
 	
 	code_code_start=code_data_start;
 	while(1){
+	
 	get_next_instruction(fpmid,buff);
 	code_code_start=ftell(fpmid);
 	if(strings_are_equal(buff,".code:")){
 		break;
 	}
+	
 	symbol trip={NULL,0,0};
 	sscanf(buff,"%ms%u",&trip.string,&trip.value);
 	
-	trip.addr=num_of_names;
+	trip.addr=num_of_names+1;
 	if(trip.string){
 
 		printf("%s %u %d\n",trip.string,trip.addr, trip.value);
@@ -298,6 +313,14 @@ void process_data(char buff[1024]){
 		printf("erro a parsear var\n");
 	}
 	num_of_names++;
+	}
+	fprintf(fpout,"%x\n",num_of_names);
+	curr_code++;
+	for(int32_t i=0;i<num_of_names;i++){
+		
+		fprintf(fpout,"%x\n",avail_names[i].value);
+		curr_code++;
+
 	}
 }
 u_int32_t instr_buff_is_space(char buff[1024]){
@@ -325,20 +348,19 @@ void get_all_labels(void){
 		p->string=malloc(strlen(buff)+1);
 		memset(p->string,0,strlen(buff)+1);
 		strcpy(p->string,buff);
-		p->value=curr_code;
+		p->addr=curr_code;
 	}
 	curr_code++;
 	}
 	printf("Labels:\n");
 	for(int32_t i=0;i<num_of_labels;i++){
-		printf("Label: nome: %s, address: %u\n",avail_labels[i].string,avail_labels[i].value);
+		printf("Label: nome: %s, address: %u\n",avail_labels[i].string,avail_labels[i].addr);
 	}
 	
 	
 }
 void substitute_all_names(symbol table[],u_int32_t relative){
 	char buff[1024];
-	int num=0;
 	while(1){
 	if(feof(fpmid)||ferror(fpmid)){
 		break;
@@ -348,8 +370,8 @@ void substitute_all_names(symbol table[],u_int32_t relative){
 
 	}
 	else{
-	substitute_names(table,instr_pos,buff,num,relative);
-	num++;
+	curr_code_2++;
+	substitute_names(table,instr_pos,buff,curr_code_2,relative);
 	}
 	}
 
@@ -379,16 +401,18 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 		return;
 	}
 	char buff[1024];
-	process_data(buff);
+	process_data(buff,fpout);
 	fseek(fpmid,code_code_start,SEEK_SET);
 	memset(buff,1,1023);
-	substitute_all_names(avail_names,0);
+	u_int32_t prog_start=curr_code_2=curr_code;
+	substitute_all_names(avail_names,1);
 	fseek(fpmid,code_code_start,SEEK_SET);
 	memset(buff,1,1023);
 	get_all_labels();
 	buff[1023]=0;
 	fseek(fpmid,code_code_start,SEEK_SET);
 	memset(buff,1,1023);
+	curr_code_2=prog_start;
 	substitute_all_names(avail_labels,1);
 	fseek(fpmid,code_code_start,SEEK_SET);
 	while(strlen(buff)){

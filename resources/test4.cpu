@@ -12,7 +12,7 @@ F8000000
 
 //load immedite masks: dest reg, value
 07C00000
-003FFFFF
+0000FFFF
 	
 //memory op masks: reg with value(store)/ dest reg(load) reg with addres(load and store) reg types
 07C00000
@@ -29,3 +29,7 @@ F8000000
 
 //flag masks: zero flag
 00000001
+
+//push and pop masks 
+0000001F
+

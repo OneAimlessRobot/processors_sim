@@ -1,7 +1,7 @@
 #ifndef DECODER_H
 #define DECODER_H
 
-typedef enum {ALU,MEM,IMM,COND,CONTROL}instr_type;
+typedef enum {ALU,MEM,IMM,COND,CONTROL,STACK}instr_type;
 
 typedef enum {ADD=0x10000000,
 		LMEM=0x20000000,
@@ -14,7 +14,10 @@ typedef enum {ADD=0x10000000,
 			RET=0x90000000,
 			CMP=0xa0000000,
 			BZERO=0xb0000000,
-			BNZERO=0xc0000000
+			BNZERO=0xc0000000,
+			PUSH=0xd0000000,
+			POP=0xe0000000,
+			LMEMR=0xf0000000
 			}op_code;
 
 #define OP_CODE_MASK 0xF0000000
@@ -29,6 +32,7 @@ typedef struct mmu{
 		mem_addr_reg_mask,
 		mem_reg_type_mask,
 		mem_size_mask;
+	u_int32_t stack_reg_mask;
 
 	u_int32_t jmp_addr_mask;
 

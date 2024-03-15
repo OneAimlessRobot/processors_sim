@@ -131,15 +131,22 @@ FILE* fp=NULL;
 		return 0;
 	}
 	dprintf(1,"\n");
+	skip_cpu_comments(fp);
 	printWord(1,dec->arith.cmp_value_mask);
 	dprintf(1,"\n");
-	skip_cpu_comments(fp);
 	if(!fscanf(fp,"%x",&dec->ccu.z_flag_mask)){
 		fclose(fp);
 		return 0;
 	}
-	dprintf(1,"\n");
 	printWord(1,dec->ccu.z_flag_mask);
+	dprintf(1,"\n");
+	skip_cpu_comments(fp);
+	if(!fscanf(fp,"%x",&dec->mem.stack_reg_mask)){
+		fclose(fp);
+		return 0;
+	}
+	printWord(1,dec->mem.stack_reg_mask);
+	dprintf(1,"\n");
 	fclose(fp);
 	return 1;
 
@@ -155,6 +162,15 @@ instr_type type=0;
 		break;
 	case LMEM:
 		type=MEM;
+		break;
+	case LMEMR:
+		type=MEM;
+		break;
+	case PUSH:
+		type=STACK;
+		break;
+	case POP:
+		type=STACK;
 		break;
 	case SUB:
 		type=ALU;

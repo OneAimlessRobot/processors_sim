@@ -44,7 +44,7 @@ void sigpipe_handler(int param){
 int main(void){
 	signal(SIGINT,sigint_handler);
 	signal(SIGPIPE,sigpipe_handler);
-	if(!(fpcode=fopen(PROGRAM_FILE_PATH,"r"))){
+	if(!(fpcode=fopen(PROGRAM_FILE2_PATH,"r"))){
 
 		perror("Invalid file path!!!\n");
 		exit(-1);
@@ -62,19 +62,7 @@ int main(void){
 		raise(SIGINT);
 	}
 	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	loadProg(fpcompiled,sys);
-	int fd=0;
+	int fd=1;
 	int flags=0;
 	if(fd>=1){
 

@@ -1,0 +1,18 @@
+.data:
+testvalue1 5;
+testvalue2 6;
+testvalue3 7;
+.code:
+
+limm 2 testvalue1
+loadr 1 2 0 0
+push 1
+limm 2 testvalue2
+loadr 1 2 0 0
+push 1
+limm 2 testvalue3
+loadr 1 2 0 0
+push 1
+pop 3
+pop 4
+pop 5

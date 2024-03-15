@@ -25,9 +25,9 @@ static void cond_load(decoder*dec,u_int32_t inst,u_int8_t* reg,u_int32_t* value)
 	(*reg)|=unprocessed_dest;
 	(*value)|=unprocessed_value;
 }
-static void bz(cpu*proc,u_int32_t inst){
+static void bz(cpu*proc){
 	int16_t addr_val;
-	process_cond_op(&proc->dec,inst,&addr_val);
+	process_cond_op(&proc->dec,proc->instr_reg,&addr_val);
 	
 	switch(proc->status_word&proc->dec.ccu.z_flag_mask){
 		case 0:
@@ -39,9 +39,9 @@ static void bz(cpu*proc,u_int32_t inst){
 
 	}
 }
-static void bnz(cpu*proc,u_int32_t inst){
+static void bnz(cpu*proc){
 	int16_t addr_val;
-	process_cond_op(&proc->dec,inst,&addr_val);
+	process_cond_op(&proc->dec,proc->instr_reg,&addr_val);
 	
 	switch(proc->status_word&proc->dec.ccu.z_flag_mask){
 		case 0:
@@ -53,27 +53,27 @@ static void bnz(cpu*proc,u_int32_t inst){
 
 	}
 }
-void proc_cond_op(cpu*proc,op_code code,u_int32_t inst){
+void proc_cond_op(cpu*proc,op_code code){
 	int16_t addr_val;
 	u_int32_t value;
 	u_int8_t reg;
 	u_int32_t cmp_result=0x0;
-	process_cond_op(&proc->dec,inst,&addr_val);
+	process_cond_op(&proc->dec,proc->instr_reg,&addr_val);
 switch(code){
 	case JMP:
 	proc->prev_pc=proc->curr_pc;
 	proc->curr_pc+=(int16_t)addr_val;
 	break;
 	case CMP:
-	cond_load(&proc->dec,inst,&reg,&value);
+	cond_load(&proc->dec,proc->instr_reg,&reg,&value);
 	cmp_result=getProcRegValue(proc,reg,0)-value;
 	proc->status_word=(!(cmp_result) ?  (proc->status_word | 1) :(proc->status_word & (~1)));
 	break;
 	case BZERO:
-	bz(proc,inst);
+	bz(proc);
 	break;
 	case BNZERO:
-	bnz(proc,inst);
+	bnz(proc);
 	break;
 	case RET:
 	proc->curr_pc=proc->prev_pc+addr_val;
