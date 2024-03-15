@@ -342,6 +342,7 @@ void get_all_labels(void){
 		perror("EMPTY LABEL NAME!!!!!\n");
 		raise(SIGINT);
 	}
+	curr_code++;
 	if(buff[strlen(buff)-1]==':'){
 		buff[strlen(buff)-1]=0;
 		symbol* p=&avail_labels[num_of_labels++];
@@ -350,7 +351,6 @@ void get_all_labels(void){
 		strcpy(p->string,buff);
 		p->addr=curr_code;
 	}
-	curr_code++;
 	}
 	printf("Labels:\n");
 	for(int32_t i=0;i<num_of_labels;i++){

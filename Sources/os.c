@@ -421,9 +421,9 @@ void switchOnCPU(int fd,os*system){
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		usleep(100000);
+		usleep(1000000);
 	}
-		usleep(100000);
+		usleep(1000000);
 		printThings(fd,system);
 		if(!(fd>=1)){
 		endwin();
