@@ -49,7 +49,7 @@ int main(void){
 		perror("Invalid file path!!!\n");
 		exit(-1);
 	}
-	if(!(fpcompiled=fopen(INSTR_FILE_PATH,"w"))){
+	if(!(fpcompiled=fopen(INSTR_FILE_PATH,"w+"))){
 		fclose(fpcode);
 		perror("Invalid file path!!!\n");
 		exit(-1);
@@ -63,7 +63,7 @@ int main(void){
 		raise(SIGINT);
 	}
 	
-	int fd=0;
+	int fd=1;
 	int flags=0;
 	if(fd>=1){
 

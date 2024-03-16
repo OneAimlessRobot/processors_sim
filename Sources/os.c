@@ -414,7 +414,6 @@ void switchOnCPU(int fd,os*system){
 		loadValue(system->mem,(system->proc->curr_pc)*WORD_SIZE,(u_int32_t)sizeof(system->proc->instr_reg),(void*) &system->proc->instr_reg);
 		
 		menu(fd);
-		
 		usleep(1000000);
 		printThings(fd,system);
 		execute(system->proc);
@@ -425,6 +424,7 @@ void switchOnCPU(int fd,os*system){
 	}
 		printThings(fd,system);
 		usleep(1000000);
+		
 		if(!(fd>=1)){
 		endwin();
 		}

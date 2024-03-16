@@ -13,26 +13,15 @@
 #include "../Includes/decoder.h"
 #include "../Includes/compiler.h"
 
-static int32_t curr_code_2=0, code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
+static int32_t curr_code_2=0, data_size=0,code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
+
 static FILE* fpmid=NULL;
 static decoder* priv_dec=NULL;
-static symbol conv_table[]={
-					{"add",ADD,0},
-					{"sub",SUB,0},
-					{"or",OR,0},
-					{"and",AND,0},
-					{"load",LMEM,0},
-					{"loadr",LMEMR,0},
-					{"limm",LIMM,0},
-					{"store",STO,0},
-					{"jmp",JMP,0},
-					{"ret",RET,0},
-					{"cmp",CMP,0},
-					{"bz",BZERO,0},
-					{"bnz",BNZERO,0},
-					{"push",PUSH,0},
-					{"pop",POP,0},
-					{NULL,0,0},
+static char* data_types_table[]={
+			"byte",
+			"short",
+			"word",
+			NULL
 			};
 
 static symbol avail_names[MAX_NAMES]={0};
@@ -48,6 +37,236 @@ static u_int32_t mask_photograph(u_int32_t mask,u_int32_t value){
 	result<<=advance;
 	return result;
 	
+
+}
+
+static void load_byte_data(char* ptr,FILE* fp){
+	
+	u_int32_t mask=0xFF000000;
+	u_int32_t advance=0;
+	u_int8_t value=0x0;
+	u_int32_t curr_word=0x0;
+	u_int32_t shift_ammount=8;
+	u_int32_t word_parts=4;
+	u_int32_t i=0;
+	while(1){
+		for(;i<word_parts;i++){
+		if(!sscanf(ptr,"%hhu%n",&value,&advance)){
+			
+			break;
+		}
+		ptr+=advance;
+		
+		curr_word|=mask_photograph(mask,value);
+		
+		mask>>=shift_ammount;
+		if(!strlen(ptr)){
+			break;
+		}
+		}
+		if(i){
+		fprintf(fp,"%x\n",curr_word);
+		curr_code++;
+		}
+		if(i<word_parts-1){
+
+			return;
+		}
+		i=0;
+		curr_word=0x0;
+		mask=0xFF000000;
+	}
+	
+	
+
+
+}
+static void load_short_data(char* ptr,FILE* fp){
+	
+	u_int32_t mask=0xFFFF0000;
+	u_int32_t advance=0;
+	u_int16_t value=0x0;
+	u_int32_t curr_word=0x0;
+	u_int32_t shift_ammount=16;
+	u_int32_t word_parts=2;
+	u_int32_t i=0;
+	while(1){
+		for(;i<word_parts;i++){
+		if(!sscanf(ptr,"%hu%n",&value,&advance)){
+			
+			break;
+		}
+		ptr+=advance;
+		
+		curr_word|=mask_photograph(mask,value);
+		
+		mask>>=shift_ammount;
+		
+		if(!strlen(ptr)){
+			break;
+		}
+		}
+		if(i){
+		fprintf(fp,"%x\n",curr_word);
+		curr_code++;
+		}
+		if(i<word_parts-1){
+
+			return;
+		}
+		i=0;
+		curr_word=0x0;
+		mask=0xFFFF0000;
+	}
+	
+	
+
+
+}
+static void load_word_data(char* ptr,FILE* fp){
+	
+	u_int32_t advance=0;
+	u_int32_t value=0x0;
+	char* ptr2=ptr;
+	while(1){
+		if(!sscanf(ptr2,"%u%n",&value,&advance)){
+			dprintf(1,"Falhou!!!\n");
+			break;
+		}
+		ptr2+=advance;
+		if(!strlen(ptr2)){
+
+			break;
+		}
+		fprintf(fp,"%x\n",value);
+		dprintf(1,"%x, %d\n",value,advance);
+		curr_code++;
+	}
+	
+	
+
+
+}
+static void count_byte_data(char* ptr){
+	
+	u_int32_t mask=0xFF000000;
+	u_int32_t advance=0;
+	u_int8_t value=0x0;
+	u_int32_t curr_word=0x0;
+	u_int32_t shift_ammount=8;
+	u_int32_t word_parts=4;
+	u_int32_t i=0;
+	while(1){
+		for(;i<word_parts;i++){
+		if(!sscanf(ptr,"%hhu%n",&value,&advance)){
+			
+			break;
+		}
+		ptr+=advance;
+		curr_word|=mask_photograph(mask,value);
+		mask>>=shift_ammount;
+		
+		if(!strlen(ptr)){
+			break;
+		}
+		}
+		if(i){
+		data_size++;
+		}
+		if(i<word_parts-1){
+
+			return;
+		}
+		i=0;
+		curr_word=0x0;
+		mask=0xFF000000;
+		
+	}
+	
+	
+
+
+}
+static void count_short_data(char* ptr){
+	
+	u_int32_t mask=0xFFFF0000;
+	u_int32_t advance=0;
+	u_int16_t value=0x0;
+	u_int32_t curr_word=0x0;
+	u_int32_t shift_ammount=16;
+	u_int32_t word_parts=2;
+	u_int32_t i=0;
+	while(1){
+		for(;i<word_parts;i++){
+		if(!sscanf(ptr,"%hu%n",&value,&advance)){
+			
+			break;
+		}
+		ptr+=advance;
+		
+		curr_word|=mask_photograph(mask,value);
+		mask>>=shift_ammount;
+		if(!strlen(ptr)){
+			break;
+		}
+		
+		}
+		if(i){
+		data_size++;
+		}
+		if(i<word_parts-1){
+
+			return;
+		}
+		i=0;
+		curr_word=0x0;
+		mask=0xFFFF0000;
+	}
+	
+	
+
+
+}
+static void count_word_data(char* ptr){
+	
+	u_int32_t advance=0;
+	u_int32_t value=0x0;
+	char* ptr2=ptr;
+	while(1){
+		if(!sscanf(ptr2,"%u%n",&value,&advance)){
+			dprintf(1,"Falhou!!!\n");
+			break;
+		}
+		ptr2+=advance;
+		if(!strlen(ptr2)){
+
+			break;
+		}
+		dprintf(1,"%x, %d\n",value,advance);
+		data_size++;
+	}
+	
+	
+
+
+}
+static char* find_in_string_arr(char* arr[],char* string){
+	if(!string){
+		return NULL;
+	}
+	if(!strlen(string)){
+		return NULL;
+	}
+	for(u_int32_t i=0;arr[i];i++){
+		if(strings_are_equal(arr[i],string)){
+
+			return arr[i];
+		}
+		
+
+	}
+	
+	return NULL;
 
 }
 
@@ -230,7 +449,7 @@ void process_data(char buff[1024],FILE* fpout){
 	get_next_instruction(fpmid,buff);
 	code_data_start=ftell(fpmid);
 	}while(!strings_are_equal(buff,".data:"));
-	
+	int init_data_pos=ftell(fpmid);
 	code_code_start=code_data_start;
 	while(1){
 	
@@ -239,28 +458,75 @@ void process_data(char buff[1024],FILE* fpout){
 	if(strings_are_equal(buff,".code:")){
 		break;
 	}
+	char* string;
+	char* ptr=buff;
+	int advance=0;
+	char* data_type_str;
+	sscanf(buff,"%ms%ms%n",&string,&data_type_str,&advance);
+	ptr+=advance;
+	if(!find_in_string_arr(data_types_table,data_type_str)){
+
+		dprintf(1,"Erro de compilaçao: Tipo desconhecido '%s'.",data_type_str);
+		raise(SIGINT);
+	}
+	if(strings_are_equal(data_type_str,"byte")){
+
+		count_byte_data(ptr);
+	}
+	else if(strings_are_equal(data_type_str,"short")){
+
+		count_short_data(ptr);
+	}
+	else if(strings_are_equal(data_type_str,"word")){
+
+		count_word_data(ptr);
+	}
+	if(string){
+
+		free(string);
+	}
+	else{
+		printf("erro a parsear var\n");
+	}
+	}
+	fseek(fpmid,init_data_pos,SEEK_SET);
+	curr_code++;
+	fprintf(fpout,"%d\n",data_size);
+	while(1){
 	
+	get_next_instruction(fpmid,buff);
+	code_code_start=ftell(fpmid);
+	if(strings_are_equal(buff,".code:")){
+		break;
+	}
 	symbol trip={NULL,0,0};
-	sscanf(buff,"%ms%u",&trip.string,&trip.value);
-	
-	trip.addr=num_of_names+1;
+	trip.addr=curr_code;
+	char* ptr=buff;
+	int advance=0;
+	char* data_type_str;
+	sscanf(buff,"%ms%ms%n",&trip.string,&data_type_str,&advance);
+	ptr+=advance;
+	if(strings_are_equal(data_type_str,"byte")){
+
+		load_byte_data(ptr,fpout);
+	}
+	else if(strings_are_equal(data_type_str,"short")){
+
+		load_short_data(ptr,fpout);
+	}
+	else if(strings_are_equal(data_type_str,"word")){
+
+		load_word_data(ptr,fpout);
+	}
 	if(trip.string){
 
-		printf("%s %u %d\n",trip.string,trip.addr, trip.value);
+		printf("%s %u\n",trip.string,trip.addr);
 		avail_names[num_of_names]=trip;
 	}
 	else{
 		printf("erro a parsear var\n");
 	}
 	num_of_names++;
-	}
-	fprintf(fpout,"%x\n",num_of_names);
-	curr_code++;
-	for(int32_t i=0;i<num_of_names;i++){
-		
-		fprintf(fpout,"%x\n",avail_names[i].value);
-		curr_code++;
-
 	}
 }
 u_int32_t instr_buff_is_space(char buff[1024]){
