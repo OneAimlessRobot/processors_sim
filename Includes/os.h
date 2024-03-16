@@ -32,5 +32,6 @@ void switchOnCPU(int fd,os* system);
 os* spawnOS(void);
 void endOS(os** system);
 
+void printMemory(int fd,memory* mem);
 void loadProg(FILE* progfile,os*system);
 #endif

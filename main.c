@@ -10,6 +10,7 @@ FILE* fpcompiled=NULL;
 void sigint_handler(int param){
 
 	if(sys){
+		printMemory(1,sys->mem);
 		endOS(&sys);
 	}
 	if(fpcode){

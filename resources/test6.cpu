@@ -15,9 +15,6 @@ limm 2 testvalue3
 load 1 2 0 0
 push 1
 call end
-pop 3
-pop 4
-pop 5
 end:
 limm 7 10
 limm 8 1
@@ -28,4 +25,5 @@ loop:
 	push 1
 	push 1
 	push 1
-	ret 0
+	push 1
+	call end

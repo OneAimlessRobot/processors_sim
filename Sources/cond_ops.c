@@ -33,7 +33,7 @@ static void bz(cpu*proc){
 		case 0:
 			break;
 		default:
-			proc->prev_pc=proc->curr_pc;
+			proc->status_word=(proc->status_word & (~1));
 			proc->curr_pc+=(int16_t)addr_val;
 			break;
 
@@ -45,7 +45,6 @@ static void bnz(cpu*proc){
 	
 	switch(proc->status_word&proc->dec2->ccu.z_flag_mask){
 		case 0:
-			proc->prev_pc=proc->curr_pc;
 			proc->curr_pc+=(int16_t)addr_val;
 			break;
 		default:
@@ -61,7 +60,6 @@ void proc_cond_op(cpu*proc,op_code code){
 	process_cond_op(proc->dec2,proc->instr_reg,&addr_val);
 switch(code){
 	case JMP:
-	proc->prev_pc=proc->curr_pc;
 	proc->curr_pc+=(int16_t)addr_val;
 	break;
 	case CMP:

@@ -67,7 +67,7 @@ void storeMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_in
 void pushValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
-   if(!proc->stack_pointer){
+   if(proc->stack_pointer<=prog->proc_allocd_start){
 	dprintf(1,"ALREADY AT STACK TOP!!! SEGFAULT ON STACK PUSH!!!\n");
 	raise(SIGINT);
 
@@ -76,12 +76,12 @@ void pushValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
     u_int32_t true_sp=proc->stack_pointer;
    calculateAddr(&true_sp,type,reg_addr);
    memcpy(proc->running_system->mem->contents + prog->proc_data_start+true_sp,proc->reg_file + base,word_size);
-   
+   dprintf(1,"Stack pointer: %d\n",proc->stack_pointer+1);
 }
 void popValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
-   if(proc->stack_pointer>prog->proc_allocd_size){
+   if(proc->stack_pointer>=prog->proc_allocd_size){
 	dprintf(1,"ALREADY AT STACK BOTTOM!!! SEGFAULT ON STACK POP!!!\n");
 	raise(SIGINT);
 
@@ -94,25 +94,28 @@ void popValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
 void makeCall(cpu* proc,u_int32_t addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
-   if((proc->stack_pointer-4)<=0){
+   if((proc->stack_pointer-3)<=prog->proc_allocd_start){
 	dprintf(1,"ALREADY AT STACK TOP!!! NO MORE CALLS POSSIBLE!!!\nFATAL SKILL FAILURE (RETURN ALREADY!!!! MEMORY AINT CHEAP YOU UNGRATEFUL PRICK)!!!\n");
 	raise(SIGINT);
 
    }
-   proc->prev_pc=proc->curr_pc+1;
+   u_int32_t prev_pc=proc->curr_pc+1;
    proc->curr_pc+=addr;
    u_int8_t word_size=calculateAddr(&addr,0,0);
    u_int32_t next_fp=proc->stack_pointer-2;
-   u_int32_t prev_sp=proc->stack_pointer;
-   u_int32_t next_sp=next_fp-1;
+   u_int32_t prev_pc_addr=next_fp-1;
+   u_int32_t next_sp=prev_pc_addr-1;
    u_int32_t prev_fp=proc->frame_pointer;
+   u_int32_t prev_sp=prev_fp-3;
    calculateAddr(&next_fp,0,0);
    calculateAddr(&next_sp,0,0);
+   calculateAddr(&prev_pc_addr,0,0);
    memcpy(proc->running_system->mem->contents + prog->proc_data_start+ next_fp,&prev_fp ,word_size);
    memcpy(proc->running_system->mem->contents + prog->proc_data_start+ next_sp,&prev_sp, word_size);
+   memcpy(proc->running_system->mem->contents + prog->proc_data_start+ prev_pc_addr,&prev_pc, word_size);
    proc->frame_pointer=proc->stack_pointer-2;
-   proc->stack_pointer=proc->frame_pointer-2;
-	
+   proc->stack_pointer=proc->frame_pointer-3;
+
 }
 void makeReturn(cpu* proc){
    
@@ -123,13 +126,15 @@ void makeReturn(cpu* proc){
 	
    }// pfp 294
 	//psp 293
-   proc->curr_pc=proc->prev_pc;
    u_int32_t prev_fp_addr=proc->frame_pointer;
-   u_int32_t prev_sp_addr=prev_fp_addr-1;
+   u_int32_t prev_pc_addr=prev_fp_addr-1;
+   u_int32_t prev_sp_addr=prev_pc_addr-1;
    calculateAddr(&prev_fp_addr,0,0);
    calculateAddr(&prev_sp_addr,0,0);
+   calculateAddr(&prev_pc_addr,0,0);
    memcpy(&proc->frame_pointer,proc->running_system->mem->contents + prog->proc_data_start+ prev_fp_addr ,sizeof(u_int32_t));
    memcpy(&proc->stack_pointer,proc->running_system->mem->contents + prog->proc_data_start+ prev_sp_addr ,sizeof(u_int32_t));
+   memcpy(&proc->curr_pc,proc->running_system->mem->contents + prog->proc_data_start+ prev_pc_addr ,sizeof(u_int32_t));
 }
 static void load_imm(cpu*proc){
 	u_int8_t dest=0;

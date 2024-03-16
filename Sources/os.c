@@ -90,7 +90,7 @@ static u_int32_t getMemoryWord(memory*mem,u_int32_t index){
 	return *(u_int32_t*)(&mem->contents[index*WORD_SIZE]);
 
 }
-static void printMemory(int fd,memory* mem){
+void printMemory(int fd,memory* mem){
         if(fd>=1){
 	dprintf(fd,"State of this memory:\nSize: %u\n",mem->size);
         for(u_int32_t i=0;i<mem->size/WORD_SIZE;i++){
@@ -425,21 +425,15 @@ void switchOnCPU(int fd,os*system){
 		
 		menu(fd);
 		execute(system->proc);
-		printThings(fd,system);
-		//printMemory(fd,system->mem);
+		//printThings(fd,system);
 		copyCPUStateToContext(system->proc,prog);
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		//usleep(1000000);
-		int c=getc(stdin);
-		if(c=='m'){
-			printMemory(fd,system->mem);
-		}
+		usleep(100);
 	}
-		printThings(fd,system);
-		printMemory(fd,system->mem);
-		//usleep(1000000);
+		//printThings(fd,system);
+		usleep(100);
 		getc(stdin);
 		if(!(fd>=1)){
 		endwin();
