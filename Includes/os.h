@@ -7,7 +7,8 @@ typedef struct context{
 	u_int32_t proc_data_size,proc_allocd_size;
 	u_int8_t* reg_state;
         u_int32_t instr_reg;
-        u_int32_t stack_pointer;	
+        u_int32_t stack_pointer;
+	u_int32_t frame_pointer;
 	u_int32_t curr_pc;
 	u_int32_t prev_pc;
 	u_int32_t status_word;

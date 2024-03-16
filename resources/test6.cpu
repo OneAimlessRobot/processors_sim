@@ -5,20 +5,7 @@ testvalue3 word 7
 .code:
 start:
 limm 2 testvalue1
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
-add 9 9 9 0 0 0
+
 loadi 1 2 1
 push 1
 limm 2 testvalue2
@@ -27,6 +14,18 @@ push 1
 limm 2 testvalue3
 load 1 2 0 0
 push 1
+call end
 pop 3
 pop 4
 pop 5
+end:
+limm 7 10
+limm 8 1
+loop:
+	sub 7 8 7 0 0 0
+	cmp 7 0
+	bnz loop
+	push 1
+	push 1
+	push 1
+	ret 0

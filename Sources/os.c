@@ -53,6 +53,7 @@ static void copyCPUStateToContext(cpu* proc,context* c){
 	c->prev_pc=proc->prev_pc;
        	c->instr_reg=proc->instr_reg;
         c->stack_pointer=proc->stack_pointer;
+        c->frame_pointer=proc->frame_pointer;
 
 }
 static void loadContextIntoCPU(context* c,cpu*proc){
@@ -62,6 +63,8 @@ static void loadContextIntoCPU(context* c,cpu*proc){
 	proc->prev_pc=c->prev_pc;
        	proc->instr_reg=c->instr_reg;
         proc->stack_pointer=c->stack_pointer;
+        proc->frame_pointer=c->frame_pointer;
+
 
 }
 static void printCPU(int fd,cpu* processor){
@@ -71,6 +74,7 @@ static void printCPU(int fd,cpu* processor){
 	dprintf(fd,"\nPC: %u\nPrev. PC: %u\n",processor->curr_pc,processor->prev_pc);
 	dprintf(fd,"\nIR: %x\n",processor->instr_reg);
 	dprintf(fd,"\nSP: %d\n",processor->stack_pointer);
+	dprintf(fd,"\nFP: %d\n",processor->frame_pointer);
 	}
 	else{
 	printw("\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
@@ -78,6 +82,7 @@ static void printCPU(int fd,cpu* processor){
 	printw("\nPC: %u\nPrev. PC: %u\n",processor->curr_pc,processor->prev_pc);
 	printw("\nIR: %x\n",processor->instr_reg);
 	printw("\nSP: %d\n",processor->stack_pointer);
+	printw("\nFP: %d\n",processor->frame_pointer);
 	}
 }
 
@@ -91,7 +96,7 @@ static void printMemory(int fd,memory* mem){
         for(u_int32_t i=0;i<mem->size/WORD_SIZE;i++){
         	dprintf(fd,"Line %u: [",i);
 	        printWord(fd, getMemoryWord(mem,i));
-		dprintf(fd,"]\n");
+		dprintf(fd,"] Value: %u\n",getMemoryWord(mem,i));
         }
 	}
 	else{
@@ -125,6 +130,7 @@ static void printProc(int fd,context*c,cpu*proc){
         	dprintf(fd,"Process stored Prev PC: %u\n",c->prev_pc);
         	dprintf(fd,"\nIR: %x\n",c->instr_reg);
 		dprintf(fd,"\nSP: %d\n",c->stack_pointer);
+		dprintf(fd,"\nFP: %d\n",c->frame_pointer);
 	}
 	else{
 		dprintf(fd,"Processo nulo!\n");
@@ -148,6 +154,7 @@ static void printProc(int fd,context*c,cpu*proc){
         	printw("Process stored Prev PC: %u\n",c->prev_pc);
         	printw("\nIR: %x\n",c->instr_reg);
 		printw("\nSP: %d\n",c->stack_pointer);
+		printw("\nFP: %d\n",c->frame_pointer);
 	
 	}
 	else{
@@ -178,7 +185,7 @@ static void printProcTable(int fd,p_table* procs,cpu*proc){
 static void printOS(int fd,os* system){
 	if(fd>=1){
 	if(print_os){
-	dprintf(fd,"\033[2J");
+	//dprintf(fd,"\033[2J");
 	dprintf(fd,"\n-----------------------\n|--State of this os--|\n-----------------------\n");
 	if(print_cpu){
 	printCPU(fd,system->proc);
@@ -289,6 +296,7 @@ static context* spawnCtx(cpu*proc,u_int32_t id,u_int32_t data_start,u_int32_t da
 	result->prev_pc=0;
 	result->instr_reg=0;
 	result->stack_pointer=0;
+	result->frame_pointer=0;
 	return result;
 
 }
@@ -347,7 +355,7 @@ void loadProg(FILE* progfile,os* system){
 
 	u_int32_t spawned_start_addr=0;
 	u_int32_t spawned_data_size=0;
-	u_int32_t spawned_allocd_size=20;
+	u_int32_t spawned_allocd_size=300;
 	u_int32_t code_size=0;
 	u_int32_t value=0;
 	u_int32_t curr_data=0;
@@ -391,7 +399,8 @@ void loadProg(FILE* progfile,os* system){
 	ctx->proc_allocd_end=ctx->proc_allocd_start+ctx->proc_allocd_size;
 	system->avail_memory-=proc_size;
 	ctx->curr_pc=ctx->proc_code_start;
-	ctx->stack_pointer=ctx->proc_allocd_end;
+	ctx->frame_pointer=ctx->proc_allocd_size;
+	ctx->stack_pointer=ctx->frame_pointer-1;
 	rewind(progfile);
 }
 void switchOnCPU(int fd,os*system){
@@ -408,23 +417,30 @@ void switchOnCPU(int fd,os*system){
 	context* prog=system->proc_vec.processes[0];
 	system->proc->curr_pc=prog->curr_pc;
 	system->proc->stack_pointer=prog->stack_pointer;
+	system->proc->frame_pointer=prog->frame_pointer;
 	while((system->proc->curr_pc>=prog->proc_code_start)&&(system->proc->curr_pc<(prog->proc_allocd_start))){
 		
 		
 		loadValue(system->mem,(system->proc->curr_pc)*WORD_SIZE,(u_int32_t)sizeof(system->proc->instr_reg),(void*) &system->proc->instr_reg);
 		
 		menu(fd);
-		usleep(1000000);
-		printThings(fd,system);
 		execute(system->proc);
+		printThings(fd,system);
+		//printMemory(fd,system->mem);
 		copyCPUStateToContext(system->proc,prog);
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
+		//usleep(1000000);
+		int c=getc(stdin);
+		if(c=='m'){
+			printMemory(fd,system->mem);
+		}
 	}
 		printThings(fd,system);
-		usleep(1000000);
-		
+		printMemory(fd,system->mem);
+		//usleep(1000000);
+		getc(stdin);
 		if(!(fd>=1)){
 		endwin();
 		}
@@ -482,6 +498,7 @@ static cpu* spawnCPU(void){
 	result->prev_pc=0;
 	result->instr_reg=0;
         result->stack_pointer=0;
+	result->frame_pointer=0;
 	result->status_word=0;
 	result->reg_file=NULL;
 	result->wins=NULL;

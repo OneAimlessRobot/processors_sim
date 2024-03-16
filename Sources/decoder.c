@@ -169,6 +169,25 @@ FILE* fp=NULL;
 	dprintf(1,"\n");
 	printWord(1,dec->mem.mem_size_mask);
 	skip_cpu_comments(fp);
+	if(!fscanf(fp,"%x",&dec->mem.mem_i_reg_mask)){
+		fclose(fp);
+		return 0;
+	}
+	dprintf(1,"\n");
+	printWord(1,dec->mem.mem_i_reg_mask);
+	if(!fscanf(fp,"%x",&dec->mem.mem_i_addr_mask)){
+		fclose(fp);
+		return 0;
+	}
+	dprintf(1,"\n");
+	printWord(1,dec->mem.mem_i_addr_mask);
+	if(!fscanf(fp,"%x",&dec->mem.mem_i_addr_off_mask)){
+		fclose(fp);
+		return 0;
+	}
+	dprintf(1,"\n");
+	printWord(1,dec->mem.mem_i_addr_off_mask);
+	skip_cpu_comments(fp);
 	if(!fscanf(fp,"%x",&dec->mem.jmp_addr_mask)){
 		fclose(fp);
 		return 0;
@@ -317,6 +336,15 @@ instr_type type=0;
 	case LMEMR:
 		type=MEM;
 		break;
+	case STOI:
+		type=MEMI;
+		break;
+	case LMEMI:
+		type=MEMI;
+		break;
+	case LMEMIR:
+		type=MEMI;
+		break;
 	case PUSH:
 		type=STACK;
 		break;
@@ -342,6 +370,9 @@ instr_type type=0;
 		type=CONTROL;
 		break;
 	case RET:
+		type=CONTROL;
+		break;
+	case CALL:
 		type=CONTROL;
 		break;
 	case CMP:

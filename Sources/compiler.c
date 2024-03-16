@@ -40,216 +40,56 @@ static u_int32_t mask_photograph(u_int32_t mask,u_int32_t value){
 
 }
 
-static void load_byte_data(char* ptr,FILE* fp){
+static void load_generic_data(char* ptr,FILE* fp,int counting_mode,u_int8_t num_parts_to_split_word){
 	
-	u_int32_t mask=0xFF000000;
-	u_int32_t advance=0;
-	u_int8_t value=0x0;
-	u_int32_t curr_word=0x0;
-	u_int32_t shift_ammount=8;
-	u_int32_t word_parts=4;
-	u_int32_t i=0;
-	while(1){
-		for(;i<word_parts;i++){
-		if(!sscanf(ptr,"%hhu%n",&value,&advance)){
-			
-			break;
-		}
-		ptr+=advance;
-		
-		curr_word|=mask_photograph(mask,value);
-		
-		mask>>=shift_ammount;
-		if(!strlen(ptr)){
-			break;
-		}
-		}
-		if(i){
-		fprintf(fp,"%x\n",curr_word);
-		curr_code++;
-		}
-		if(i<word_parts-1){
-
-			return;
-		}
-		i=0;
-		curr_word=0x0;
-		mask=0xFF000000;
-	}
-	
-	
-
-
-}
-static void load_short_data(char* ptr,FILE* fp){
-	
-	u_int32_t mask=0xFFFF0000;
-	u_int32_t advance=0;
-	u_int16_t value=0x0;
-	u_int32_t curr_word=0x0;
-	u_int32_t shift_ammount=16;
-	u_int32_t word_parts=2;
-	u_int32_t i=0;
-	while(1){
-		for(;i<word_parts;i++){
-		if(!sscanf(ptr,"%hu%n",&value,&advance)){
-			
-			break;
-		}
-		ptr+=advance;
-		
-		curr_word|=mask_photograph(mask,value);
-		
-		mask>>=shift_ammount;
-		
-		if(!strlen(ptr)){
-			break;
-		}
-		}
-		if(i){
-		fprintf(fp,"%x\n",curr_word);
-		curr_code++;
-		}
-		if(i<word_parts-1){
-
-			return;
-		}
-		i=0;
-		curr_word=0x0;
-		mask=0xFFFF0000;
-	}
-	
-	
-
-
-}
-static void load_word_data(char* ptr,FILE* fp){
-	
+	u_int32_t shift_ammount=WORD_BITS/num_parts_to_split_word;
+	u_int32_t init_mask=0xFFFFFFFF>>shift_ammount;
+	u_int32_t mask=init_mask;
 	u_int32_t advance=0;
 	u_int32_t value=0x0;
-	char* ptr2=ptr;
+	u_int32_t curr_word=0x0;
+	u_int32_t i=0;
 	while(1){
-		if(!sscanf(ptr2,"%u%n",&value,&advance)){
-			dprintf(1,"Falhou!!!\n");
+		for(;i<num_parts_to_split_word;i++){
+		if(!sscanf(ptr,"%u%n",&value,&advance)){
+			
 			break;
 		}
-		ptr2+=advance;
-		if(!strlen(ptr2)){
-
+		if(!counting_mode){
+		
+		curr_word|=mask_photograph(mask,value);
+		
+		mask<<=shift_ammount;
+		}
+		ptr+=advance;
+		if(!strlen(ptr)){
 			break;
 		}
-		fprintf(fp,"%x\n",value);
-		dprintf(1,"%x, %d\n",value,advance);
+		}
+		if(i){
+		if(!counting_mode){
+			fprintf(fp,"%x\n",curr_word);
 		curr_code++;
-	}
-	
-	
+		}
+		else{
 
-
-}
-static void count_byte_data(char* ptr){
-	
-	u_int32_t mask=0xFF000000;
-	u_int32_t advance=0;
-	u_int8_t value=0x0;
-	u_int32_t curr_word=0x0;
-	u_int32_t shift_ammount=8;
-	u_int32_t word_parts=4;
-	u_int32_t i=0;
-	while(1){
-		for(;i<word_parts;i++){
-		if(!sscanf(ptr,"%hhu%n",&value,&advance)){
-			
-			break;
-		}
-		ptr+=advance;
-		curr_word|=mask_photograph(mask,value);
-		mask>>=shift_ammount;
-		
-		if(!strlen(ptr)){
-			break;
-		}
-		}
-		if(i){
 		data_size++;
 		}
-		if(i<word_parts-1){
+		}
+		if(i<num_parts_to_split_word||!i){
 
 			return;
 		}
 		i=0;
 		curr_word=0x0;
-		mask=0xFF000000;
-		
+		mask=init_mask;
 	}
 	
 	
 
 
 }
-static void count_short_data(char* ptr){
-	
-	u_int32_t mask=0xFFFF0000;
-	u_int32_t advance=0;
-	u_int16_t value=0x0;
-	u_int32_t curr_word=0x0;
-	u_int32_t shift_ammount=16;
-	u_int32_t word_parts=2;
-	u_int32_t i=0;
-	while(1){
-		for(;i<word_parts;i++){
-		if(!sscanf(ptr,"%hu%n",&value,&advance)){
-			
-			break;
-		}
-		ptr+=advance;
-		
-		curr_word|=mask_photograph(mask,value);
-		mask>>=shift_ammount;
-		if(!strlen(ptr)){
-			break;
-		}
-		
-		}
-		if(i){
-		data_size++;
-		}
-		if(i<word_parts-1){
 
-			return;
-		}
-		i=0;
-		curr_word=0x0;
-		mask=0xFFFF0000;
-	}
-	
-	
-
-
-}
-static void count_word_data(char* ptr){
-	
-	u_int32_t advance=0;
-	u_int32_t value=0x0;
-	char* ptr2=ptr;
-	while(1){
-		if(!sscanf(ptr2,"%u%n",&value,&advance)){
-			dprintf(1,"Falhou!!!\n");
-			break;
-		}
-		ptr2+=advance;
-		if(!strlen(ptr2)){
-
-			break;
-		}
-		dprintf(1,"%x, %d\n",value,advance);
-		data_size++;
-	}
-	
-	
-
-
-}
 static char* find_in_string_arr(char* arr[],char* string){
 	if(!string){
 		return NULL;
@@ -425,7 +265,7 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 			ptr+=snprintf(ptr,128,"%d ",trip->addr-num);
 		}
 		else{
-			ptr+=snprintf(ptr,128,"%d ",trip->value);
+			ptr+=snprintf(ptr,128,"%d ",trip->addr);
 		}
 		}
 		else{
@@ -442,57 +282,8 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 
 }
 
-void process_data(char buff[1024],FILE* fpout){
-	
-	
-	do{
-	get_next_instruction(fpmid,buff);
-	code_data_start=ftell(fpmid);
-	}while(!strings_are_equal(buff,".data:"));
-	int init_data_pos=ftell(fpmid);
-	code_code_start=code_data_start;
-	while(1){
-	
-	get_next_instruction(fpmid,buff);
-	code_code_start=ftell(fpmid);
-	if(strings_are_equal(buff,".code:")){
-		break;
-	}
-	char* string;
-	char* ptr=buff;
-	int advance=0;
-	char* data_type_str;
-	sscanf(buff,"%ms%ms%n",&string,&data_type_str,&advance);
-	ptr+=advance;
-	if(!find_in_string_arr(data_types_table,data_type_str)){
-
-		dprintf(1,"Erro de compilaçao: Tipo desconhecido '%s'.",data_type_str);
-		raise(SIGINT);
-	}
-	if(strings_are_equal(data_type_str,"byte")){
-
-		count_byte_data(ptr);
-	}
-	else if(strings_are_equal(data_type_str,"short")){
-
-		count_short_data(ptr);
-	}
-	else if(strings_are_equal(data_type_str,"word")){
-
-		count_word_data(ptr);
-	}
-	if(string){
-
-		free(string);
-	}
-	else{
-		printf("erro a parsear var\n");
-	}
-	}
-	fseek(fpmid,init_data_pos,SEEK_SET);
-	curr_code++;
-	fprintf(fpout,"%d\n",data_size);
-	while(1){
+static void load_names(char buff[1024],FILE*fpout){
+while(1){
 	
 	get_next_instruction(fpmid,buff);
 	code_code_start=ftell(fpmid);
@@ -503,31 +294,92 @@ void process_data(char buff[1024],FILE* fpout){
 	trip.addr=curr_code;
 	char* ptr=buff;
 	int advance=0;
-	char* data_type_str;
+	char* data_type_str=NULL;
 	sscanf(buff,"%ms%ms%n",&trip.string,&data_type_str,&advance);
 	ptr+=advance;
 	if(strings_are_equal(data_type_str,"byte")){
 
-		load_byte_data(ptr,fpout);
+		load_generic_data(ptr,fpout,0,4);
 	}
 	else if(strings_are_equal(data_type_str,"short")){
 
-		load_short_data(ptr,fpout);
+		load_generic_data(ptr,fpout,0,2);
 	}
 	else if(strings_are_equal(data_type_str,"word")){
 
-		load_word_data(ptr,fpout);
+		load_generic_data(ptr,fpout,0,1);
 	}
 	if(trip.string){
 
 		printf("%s %u\n",trip.string,trip.addr);
 		avail_names[num_of_names]=trip;
+	
 	}
 	else{
 		printf("erro a parsear var\n");
 	}
+	if(data_type_str){
+		free(data_type_str);
+	}
 	num_of_names++;
 	}
+
+
+}
+static void measure_data_size(char buff[1024],FILE*fpout){
+while(1){
+	
+	get_next_instruction(fpmid,buff);
+	code_code_start=ftell(fpmid);
+	if(strings_are_equal(buff,".code:")){
+		break;
+	}
+	char* string;
+	char* ptr=buff;
+	int advance=0;
+	char* data_type_str=NULL;
+	sscanf(buff,"%ms%ms%n",&string,&data_type_str,&advance);
+	ptr+=advance;
+	if(!find_in_string_arr(data_types_table,data_type_str)){
+
+		dprintf(1,"Erro de compilaçao: Tipo desconhecido '%s'.",data_type_str);
+		raise(SIGINT);
+	}
+	if(strings_are_equal(data_type_str,"byte")){
+
+		load_generic_data(ptr,fpout,1,4);
+	}
+	else if(strings_are_equal(data_type_str,"short")){
+
+		load_generic_data(ptr,fpout,1,2);
+	}
+	else if(strings_are_equal(data_type_str,"word")){
+
+		load_generic_data(ptr,fpout,1,1);
+	}
+	if(string){
+
+		free(string);
+	}
+	if(data_type_str){
+		free(data_type_str);
+	}
+}
+
+}
+void process_data(char buff[1024],FILE* fpout){
+	
+	
+	do{
+	get_next_instruction(fpmid,buff);
+	code_data_start=ftell(fpmid);
+	}while(!strings_are_equal(buff,".data:"));
+	int init_data_pos=ftell(fpmid);
+	code_code_start=code_data_start;
+	measure_data_size(buff,fpout);
+	fseek(fpmid,init_data_pos,SEEK_SET);
+	fprintf(fpout,"%d\n",data_size);
+	load_names(buff,fpout);
 }
 u_int32_t instr_buff_is_space(char buff[1024]){
 	u_int32_t result=1;
@@ -548,8 +400,8 @@ void get_all_labels(void){
 		perror("EMPTY LABEL NAME!!!!!\n");
 		raise(SIGINT);
 	}
-	curr_code++;
 	if(buff[strlen(buff)-1]==':'){
+	
 		buff[strlen(buff)-1]=0;
 		symbol* p=&avail_labels[num_of_labels++];
 		p->string=malloc(strlen(buff)+1);
@@ -557,6 +409,7 @@ void get_all_labels(void){
 		strcpy(p->string,buff);
 		p->addr=curr_code;
 	}
+	curr_code++;
 	}
 	printf("Labels:\n");
 	for(int32_t i=0;i<num_of_labels;i++){
@@ -576,8 +429,8 @@ void substitute_all_names(symbol table[],u_int32_t relative){
 
 	}
 	else{
-	curr_code_2++;
 	substitute_names(table,instr_pos,buff,curr_code_2,relative);
+	curr_code_2++;
 	}
 	}
 
@@ -611,14 +464,15 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 	fseek(fpmid,code_code_start,SEEK_SET);
 	memset(buff,1,1023);
 	u_int32_t prog_start=curr_code_2=curr_code;
-	substitute_all_names(avail_names,1);
+	substitute_all_names(avail_names,0);
 	fseek(fpmid,code_code_start,SEEK_SET);
 	memset(buff,1,1023);
+	curr_code=curr_code_2=prog_start;
 	get_all_labels();
 	buff[1023]=0;
 	fseek(fpmid,code_code_start,SEEK_SET);
 	memset(buff,1,1023);
-	curr_code_2=prog_start;
+	curr_code=curr_code_2=prog_start;
 	substitute_all_names(avail_labels,1);
 	fseek(fpmid,code_code_start,SEEK_SET);
 	while(strlen(buff)){

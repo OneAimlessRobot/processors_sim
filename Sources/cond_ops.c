@@ -65,7 +65,7 @@ switch(code){
 	proc->curr_pc+=(int16_t)addr_val;
 	break;
 	case CMP:
-	cond_load(&proc->dec,proc->instr_reg,&reg,&value);
+	cond_load(proc->dec2,proc->instr_reg,&reg,&value);
 	cmp_result=getProcRegValue(proc,reg,0)-value;
 	proc->status_word=(!(cmp_result) ?  (proc->status_word | 1) :(proc->status_word & (~1)));
 	break;
@@ -76,8 +76,10 @@ switch(code){
 	bnz(proc);
 	break;
 	case RET:
-	proc->curr_pc=proc->prev_pc+addr_val;
-	proc->prev_pc=proc->curr_pc;
+	makeReturn(proc);
+	break;
+	case CALL:
+	makeCall(proc,addr_val);
 	break;
 	default:
 	break;

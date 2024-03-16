@@ -15,6 +15,7 @@ typedef struct cpu{
 	u_int32_t status_word;
 	u_int32_t instr_reg;
 	u_int32_t stack_pointer;
+	u_int32_t frame_pointer;
 	u_int32_t curr_pc,prev_pc;
 	
 	decoder dec;
@@ -35,4 +36,6 @@ int32_t getProcRegValue(cpu* proc,u_int32_t regIndex,u_int8_t reg_size);
 void storeValueReg(cpu* proc, u_int32_t base,reg_type type,u_int32_t value,u_int8_t reg_addr);
 void loadMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr);
 void storeMemValue(cpu* proc,u_int32_t base,u_int32_t basemem,reg_type type,u_int8_t reg_addr);
+void makeCall(cpu* proc,u_int32_t addr);
+void makeReturn(cpu* proc);
 #endif

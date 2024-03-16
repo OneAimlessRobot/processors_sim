@@ -1,4 +1,4 @@
-7
+8
 F8000000
 
 6
@@ -32,13 +32,23 @@ store 40000000
 load 20000000
 loadr f0000000
 
+3
+07C00000
+000FF000
+000000FF
+3
+storei 18000000
+loadi 28000000
+loadir 38000000
+
 1
-07FFFFFF
-4
+0000FFFF
+5
 jmp 80000000
 ret 90000000
 bz b0000000
 bnz c0000000
+call 48000000
 
 2
 07C00000
@@ -56,7 +66,6 @@ zero_flag 08000000
 2
 push d0000000
 pop e0000000
-
 
 //alu masks: first oper reg,sec oper reg, dst reg, reg type
 07C00000
@@ -77,8 +86,13 @@ pop e0000000
 00000030
 00000003
 
+//memory op masks: reg with value(store)/ dest reg(load) reg with addres(load and store) reg types
+07C00000
+000FF000
+00000FFF
+
 //conditional op masks: addr to jump to
-07FFFFFF
+0000FFFF
 
 //cmp masks: reg to compare, value to compare
 07C00000
