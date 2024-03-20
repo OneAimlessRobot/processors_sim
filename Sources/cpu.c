@@ -68,7 +68,7 @@ void pushValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
    if(proc->stack_pointer<=prog->proc_allocd_start){
-	dprintf(1,"ALREADY AT STACK TOP!!! SEGFAULT ON STACK PUSH!!!\nListen to me!\nYour body cant literally take it anymore!\nStop gorging and go lift weights you fat pig!\n");
+	dprintf(1,"ALREADY AT STACK TOP!!! SEGFAULT ON STACK PUSH!!!\n I want you to listen to me very carefully, ok?\nYour body literally cant take it anymore, got it?\nNow stop gorging and go lift weights, you fat pig!\n");
 	raise(SIGINT);
 
    }
@@ -81,7 +81,7 @@ void popValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
    if(proc->stack_pointer>=prog->proc_allocd_size){
-	dprintf(1,"ALREADY AT STACK BOTTOM!!! SEGFAULT ON STACK POP!!!\nJust eat something! Thats why no one wants you you sack of bones!\nNow Stop fucking coping with eating disorders!!!!!\nyour body is literally falling apart right now, you anemic disgusting loser!\n");
+	dprintf(1,"ALREADY AT STACK BOTTOM!!! SEGFAULT ON STACK POP!!!\n Ewwww repugnant body failure!!!!!!! Go eat something!!!!!!\nNo one fucking wants you because you look like a call of duty zombie!\nStop fucking coping with eating disorders!!!!!\nyour body is literally falling apart as we speak, you disgusting loser!\n");
 	raise(SIGINT);
 
    }
