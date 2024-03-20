@@ -185,7 +185,7 @@ static void printProcTable(int fd,p_table* procs,cpu*proc){
 static void printOS(int fd,os* system){
 	if(fd>=1){
 	if(print_os){
-	//dprintf(fd,"\033[2J");
+	dprintf(fd,"\033[2J");
 	dprintf(fd,"\n-----------------------\n|--State of this os--|\n-----------------------\n");
 	if(print_cpu){
 	printCPU(fd,system->proc);
@@ -425,15 +425,15 @@ void switchOnCPU(int fd,os*system){
 		
 		menu(fd);
 		execute(system->proc);
-		//printThings(fd,system);
+		printThings(fd,system);
 		copyCPUStateToContext(system->proc,prog);
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		usleep(100);
+		usleep(100000);
 	}
-		//printThings(fd,system);
-		usleep(100);
+		printThings(fd,system);
+		usleep(100000);
 		getc(stdin);
 		if(!(fd>=1)){
 		endwin();

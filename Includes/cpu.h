@@ -27,6 +27,7 @@ typedef struct cpu{
 	struct os* running_system;
 
 }cpu;
+
 void execute(cpu*proc);
 void decodeInstruction(cpu*proc);
 void pushValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr);

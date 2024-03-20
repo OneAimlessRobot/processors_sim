@@ -68,7 +68,7 @@ void pushValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
    if(proc->stack_pointer<=prog->proc_allocd_start){
-	dprintf(1,"ALREADY AT STACK TOP!!! SEGFAULT ON STACK PUSH!!!\n");
+	dprintf(1,"ALREADY AT STACK TOP!!! SEGFAULT ON STACK PUSH!!!\nListen to me!\nYour body cant literally take it anymore!\nStop gorging and go lift weights you fat pig!\n");
 	raise(SIGINT);
 
    }
@@ -76,13 +76,12 @@ void pushValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
     u_int32_t true_sp=proc->stack_pointer;
    calculateAddr(&true_sp,type,reg_addr);
    memcpy(proc->running_system->mem->contents + prog->proc_data_start+true_sp,proc->reg_file + base,word_size);
-   dprintf(1,"Stack pointer: %d\n",proc->stack_pointer+1);
 }
 void popValue(cpu* proc,u_int32_t base,reg_type type,u_int8_t reg_addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
    if(proc->stack_pointer>=prog->proc_allocd_size){
-	dprintf(1,"ALREADY AT STACK BOTTOM!!! SEGFAULT ON STACK POP!!!\n");
+	dprintf(1,"ALREADY AT STACK BOTTOM!!! SEGFAULT ON STACK POP!!!\nJust eat something! Thats why no one wants you you sack of bones!\nNow Stop fucking coping with eating disorders!!!!!\nyour body is literally falling apart right now, you anemic disgusting loser!\n");
 	raise(SIGINT);
 
    }
@@ -95,7 +94,7 @@ void makeCall(cpu* proc,u_int32_t addr){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
    if((proc->stack_pointer-3)<=prog->proc_allocd_start){
-	dprintf(1,"ALREADY AT STACK TOP!!! NO MORE CALLS POSSIBLE!!!\nFATAL SKILL FAILURE (RETURN ALREADY!!!! MEMORY AINT CHEAP YOU UNGRATEFUL PRICK)!!!\n");
+	dprintf(1,"ALREADY AT STACK TOP!!CANNOT CALL! NO MORE CALLS POSSIBLE!!!\nFATAL SKILL FAILURE (RETURN ALREADY!!!! MEMORY AINT CHEAP YOU UNGRATEFUL PRICK)!!!\n");
 	raise(SIGINT);
 
    }
@@ -121,7 +120,7 @@ void makeReturn(cpu* proc){
    
    context* prog=proc->running_system->proc_vec.processes[proc->running_system->curr_process];
    if(proc->frame_pointer==prog->proc_allocd_size){
-	dprintf(1,"ALREADY AT STACK BOTTOM!!! NO FUNCTION CALLED THIS FRAME DUMBASSS!!!!\nFATAL SKILL FAILURE (CALL SOMETHING ROCK HEAD)!!!\n");
+	dprintf(1,"ALREADY AT STACK BOTTOM!!CANNOT RETURN! NO FUNCTION CALLED THIS FRAME DUMBASSS!!!!\nFATAL SKILL FAILURE (CALL SOMETHING ROCK HEAD)!!!\n");
 	raise(SIGINT);
 	
    }// pfp 294

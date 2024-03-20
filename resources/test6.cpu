@@ -14,16 +14,12 @@ push 1
 limm 2 testvalue3
 load 1 2 0 0
 push 1
-call end
-end:
-limm 7 10
-limm 8 1
-loop:
-	sub 7 8 7 0 0 0
-	cmp 7 0
-	bnz loop
-	push 1
-	push 1
-	push 1
-	push 1
-	call end
+pop 4
+pop 5
+pop 6
+pop 7
+pop 8
+pop 9
+pop 10
+pop 11
+pop 12
