@@ -9,7 +9,6 @@ fact_param_reg word 10; asdasdda
 ;z
 ;s<
 ;asa,sda,sd
-
 mult_param_1_reg word 19
 ;;
 
@@ -23,10 +22,6 @@ curr_it_reg word 3
 
 .code:
 start:
-	                                          loadi 1 0 0 0 
-	                                            loadi 2 0 1 0 
-	                                              loadi 10 0 3 0 
-	                             loadi 9 0 0 0 
 	
 fact_iteration:	
 	                                   add 9 2 19 0 0 0 
