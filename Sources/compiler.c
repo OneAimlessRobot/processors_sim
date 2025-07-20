@@ -15,7 +15,7 @@
 
 static int32_t curr_code_2=0, data_size=0,code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
 
-static FILE* fpmid=NULL;
+FILE* fpmid=NULL;
 static decoder* priv_dec=NULL;
 static char* data_types_table[]={
 			"byte",
@@ -256,6 +256,14 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 		symbol* trip=NULL;
 		
 		if(ntokens==1&&!find_instr_with_name(priv_dec,curr_token)){
+				for(int32_t i=0;i<num_of_names;i++){
+				free(avail_names[i].string);
+
+				}
+				for(int32_t i=0;i<num_of_labels;i++){
+				free(avail_labels[i].string);
+
+				}
 				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
 				raise(SIGINT);
 		}
@@ -341,6 +349,14 @@ while(1){
 	sscanf(buff,"%ms%ms%n",&string,&data_type_str,&advance);
 	ptr+=advance;
 	if(!find_in_string_arr(data_types_table,data_type_str)){
+		for(int32_t i=0;i<num_of_names;i++){
+		free(avail_names[i].string);
+
+		}
+		for(int32_t i=0;i<num_of_labels;i++){
+		free(avail_labels[i].string);
+
+		}
 
 		dprintf(1,"Erro de compilaçao: Tipo desconhecido '%s'.",data_type_str);
 		raise(SIGINT);
@@ -498,4 +514,5 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 		
 	}
 	fclose(fpmid);
+	fpmid=NULL;
 }

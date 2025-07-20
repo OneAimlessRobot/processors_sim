@@ -11,4 +11,6 @@ typedef struct symbol{
 }symbol;
 
 void compile(decoder*dec,FILE* fin,FILE* fpout);
+
+extern FILE* fpmid;
 #endif

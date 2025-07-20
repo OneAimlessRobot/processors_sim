@@ -1,8 +1,8 @@
 .data:
 one_value_reg word 1
-zero_value_reg word 2
-result_reg word 9        ;Register to store the result
-num_to_factorial word 40  ;Number for which factorial is to be calculated
+zero_value_reg word 0
+result_reg word 9
+num_to_factorial word 10  
 fact_param_reg word 10
 mult_param_1_reg word 19
 mult_param_2_reg word 18
@@ -10,24 +10,24 @@ curr_it_reg word 3
 
 .code:
 start:
-	load one_value_reg 1 0 1
-	limm zero_value_reg 0
-	limm fact_param_reg num_to_factorial
-	limm result_reg 1
+	                                         loadi 1 0 0 0 
+	                                           loadi 2 1 0 0 
+	                                              loadi 10 0 3 0 
+	                             loadi 9 1 0 0 
 	
 fact_iteration:	
-	add result_reg zero_value_reg mult_param_1_reg 0 0 0
-	add fact_param_reg zero_value_reg mult_param_2_reg 0 0 0
-	sub fact_param_reg one_value_reg fact_param_reg 0 0 0
-	cmp fact_param_reg 0
-	bz end
-	bnz mult
+	                                   add 9 2 19 0 0 0 
+	                                     add 10 2 18 0 0 0 
+	                                     sub 10 1 10 0 0 0 
+	                   cmp 10 0 
+	               bz 8 
+	                   bnz 1 
 mult: 
-	add result_reg mult_param_1_reg result_reg 0 0 1
-	sub mult_param_2_reg one_value_reg mult_param_2_reg 0 0 1
+	                                   add 9 19 9 0 0 0 
+	                                     sub 18 1 18 0 0 0 
 	
-	cmp mult_param_2_reg 1
-	bz fact_iteration
-	bnz mult
+	                   cmp 18 1 
+	                                     bz -11 
+	                   bnz -5 
 
 end:
