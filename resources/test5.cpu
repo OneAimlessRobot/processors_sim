@@ -4,7 +4,7 @@ testvalue2 word 6
 testvalue3 word 7
 .code:
 start:
-limm 2 testvalue1
+limm 9 testvalue2
 add 9 9 9 0 0 0
 add 9 9 9 0 0 0
 add 9 9 9 0 0 0
@@ -19,14 +19,23 @@ add 9 9 9 0 0 0
 add 9 9 9 0 0 0
 add 9 9 9 0 0 0
 add 9 9 9 0 0 0
-loadi 1 2 1
-push 1
-limm 2 testvalue2
-load 1 2 0 0
-push 1
-limm 2 testvalue3
-load 1 2 0 0
-push 1
-pop 3
-pop 4
-pop 5
+loadi 1 2 2
+;push 1
+
+;limm 2 testvalue2
+
+;load 1 2 0 0
+
+;push 1
+
+;limm 2 testvalue3
+
+;load 1 2 0 0
+
+;push 1
+
+;pop 3
+
+;pop 4
+
+;pop 5

@@ -56,7 +56,7 @@ int32_t firstBitOne(u_int32_t line){
 }
 int32_t lastBitOne(u_int32_t line){
 	
-	u_int32_t mask=0x10000000;
+	u_int32_t mask=0x80000000;
         for(int32_t i=BYTE_BITS*WORD_SIZE;i>0;i--){
                 if(((mask&line)==mask)){
                 	return i;
@@ -70,16 +70,14 @@ void skip_cpu_comments(FILE* fp){
 	int curr_char=0;
 	char buff[BUFFSIZE]={0};
 	char* result=NULL;
+
+	skip_comment:
 	while(isspace((curr_char=fgetc(fp)))&&curr_char!=EOF);
-	if(curr_char==EOF){
-		usleep(1000000);
-		return;
-	}
-	printf("\nValor de EOF: %d\nValor de curr_char: %d\n",EOF,curr_char);
-	//ungetc(curr_char,fp);
-	//if(curr_char=='/'){
+	
+	ungetc(curr_char,fp);
+
+	if(curr_char==';'){
 	//
-		//if(((curr_char=fgetc(fp))=='/')&&curr_char!=EOF){
 		/*result=fgets(buff,strlen(COMMENT_STRING)+1,fp);
 		buff[strlen(COMMENT_STRING)]=0;
 		if(!feof(fp)&&strings_are_equal(buff,COMMENT_STRING)){
@@ -94,24 +92,19 @@ void skip_cpu_comments(FILE* fp){
 			ungetc(curr_char,fp);
 
 		}*/
-		if(((curr_char=fgetc(fp))==';')&&curr_char!=EOF){
-		//if(((curr_char=fgetc(fp))==';')){
+		if((curr_char=fgetc(fp))!=EOF){
 			ungetc(curr_char,fp);
 			while(((curr_char=fgetc(fp))!='\n')&&curr_char!=EOF);
-			if(curr_char==EOF){
-				usleep(1000000);
-				return;
-			}
 			ungetc(curr_char,fp);
 		}
 
-	//}
+	}
 
 	while(isspace((curr_char=fgetc(fp)))&&curr_char!=EOF);
-	if(curr_char==EOF){
-		usleep(1000000);
-		return;
-	}
 	ungetc(curr_char,fp);
+	if(curr_char==';'){
+		printf("tried to skip comment again\n");
+		goto skip_comment;
+	}
 }
 

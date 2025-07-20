@@ -4,7 +4,7 @@
 #define BYTE_BITS 8
 #define WORD_SIZE sizeof(u_int32_t)
 #define WORD_BITS (BYTE_BITS*WORD_SIZE)
-#define MEM_WORDS 500
+#define MEM_WORDS 90
 #define MEM_DEF_SIZE (WORD_SIZE*MEM_WORDS)
 
 #define INSTR_FILE_PATH "resources/test1.cpu"
@@ -14,10 +14,11 @@
 #define PROGRAM_FILE2_PATH "resources/test3.cpu"
 #define TMP_FILE_NAME "tmp.tmp"
 
+#define PROC_STACK_SIZE 50
 #define MAX_NUM_OF_WINDOWS 100
 #define MAX_NUM_OF_PROCESSES 100
 #define BUFFSIZE 1024
 
 #define TIMEOUT_IN 0
-#define TIMEOUT_IN_US 10
+#define TIMEOUT_IN_US 10000
 #endif

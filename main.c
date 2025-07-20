@@ -19,6 +19,9 @@ void sigint_handler(int param){
 	if(fpcompiled){
 		fclose(fpcompiled);
 	}
+	if(fpmid){
+		fclose(fpmid);
+	}
 	nocbreak();
 	endwin();
 	getc(stdin);
@@ -36,6 +39,9 @@ void sigpipe_handler(int param){
 	}
 	if(fpcompiled){
 		fclose(fpcompiled);
+	}
+	if(fpmid){
+		fclose(fpmid);
 	}
 	endwin();
 	remove(TMP_FILE_NAME);

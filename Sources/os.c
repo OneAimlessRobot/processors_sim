@@ -72,7 +72,15 @@ static void printCPU(int fd,cpu* processor){
 	dprintf(fd,"\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
 	printCPURegs(fd,processor);
 	dprintf(fd,"\nPC: %u\nPrev. PC: %u\n",processor->curr_pc,processor->prev_pc);
-	dprintf(fd,"\nIR: %x\n",processor->instr_reg);
+	instr_info* info=find_instr_with_code(processor->dec2,processor->dec2->op_code_mask&processor->instr_reg);
+	char* op_string=NULL;
+	u_int32_t obtained_op=processor->dec2->op_code_mask&processor->instr_reg;
+	
+	if(info){
+		op_string=get_op_name_inside_group(info,obtained_op);
+
+	}
+	dprintf(fd,"\nIR: %x\n\nA mascara de opcode é %x\nA instruição obtida tem codigo %x\nA instrução é um %s!!!\n",processor->instr_reg,processor->dec2->op_code_mask,obtained_op,info?op_string:"Nada\n");
 	dprintf(fd,"\nSP: %d\n",processor->stack_pointer);
 	dprintf(fd,"\nFP: %d\n",processor->frame_pointer);
 	}
@@ -80,7 +88,12 @@ static void printCPU(int fd,cpu* processor){
 	printw("\n-----------------------\n|--State of this cpu--|\n-----------------------\n");
 	printCPURegs(fd,processor);
 	printw("\nPC: %u\nPrev. PC: %u\n",processor->curr_pc,processor->prev_pc);
-	printw("\nIR: %x\n",processor->instr_reg);
+	instr_info* info=find_instr_with_code(processor->dec2,processor->dec2->op_code_mask&processor->instr_reg);
+	char* op_string=NULL;
+	if(info){
+		op_string=info->headers->instr_name;
+	}
+	printw("\nIR: %x\n\nA mascara de opcode é %x\nA instrução é um %s!!!\n",processor->instr_reg,processor->dec2->op_code_mask,info?op_string:"Nada\n");
 	printw("\nSP: %d\n",processor->stack_pointer);
 	printw("\nFP: %d\n",processor->frame_pointer);
 	}
@@ -240,17 +253,20 @@ static void printThings(int fd,os*system){
 }
 
 void menu(int fd){
-		int c;
-		int result;
+		char buff[BUFFSIZE]={0};;
+		int c=0;
+		int result=0;
 		if(fd>=1){
 		FD_ZERO(&filedescs);
                 FD_SET(0,&filedescs);
 		result=select(1,&filedescs,NULL,NULL,&tv);
 		if(result>0){
-		read(0,(char*)&c,1);
+		read(0,buff,BUFFSIZE-1);
+		c=buff[0];
 		}
 		}
 		else{
+		//usleep((TIMEOUT_IN*1000000)+TIMEOUT_IN_US);
 		c=(int )getch();
 		}
 		switch(c){
@@ -274,7 +290,7 @@ void menu(int fd){
 		}
 		if(fd>=1&&result<=0){
 
-			//dprintf(1,"Timeout!!!\n");
+			dprintf(1,"Timeout!!!\n");
 		}
 				
 
@@ -355,7 +371,7 @@ void loadProg(FILE* progfile,os* system){
 
 	u_int32_t spawned_start_addr=0;
 	u_int32_t spawned_data_size=0;
-	u_int32_t spawned_allocd_size=300;
+	u_int32_t spawned_allocd_size=PROC_STACK_SIZE;
 	u_int32_t code_size=0;
 	u_int32_t value=0;
 	u_int32_t curr_data=0;
@@ -407,7 +423,7 @@ void switchOnCPU(int fd,os*system){
 	if(!(fd>=1)){
 	initscr();
 	start_color();
-	timeout(0);
+	timeout(TIMEOUT_IN*1000);
 	curs_set(0);
 	noecho();
 	}
@@ -430,10 +446,10 @@ void switchOnCPU(int fd,os*system){
 		system->curr_process=((system->curr_process+1)%system->proc_vec.num_of_processes);
 		prog=system->proc_vec.processes[system->curr_process];
 		loadContextIntoCPU(prog,system->proc);
-		usleep(100000);
+		usleep((TIMEOUT_IN*1000000)+TIMEOUT_IN_US);
 	}
 		printThings(fd,system);
-		usleep(100000);
+		usleep((TIMEOUT_IN*1000000)+TIMEOUT_IN_US);
 		getc(stdin);
 		if(!(fd>=1)){
 		endwin();

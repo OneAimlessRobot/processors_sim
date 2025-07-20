@@ -1,4 +1,4 @@
 #!/bin/bash
 
-valgrind --max-stackframe=6256368 --show-leak-kinds=all --track-fds=yes --leak-check=full --track-origins=yes ./*.exe
+valgrind -s --max-stackframe=6256368 --show-leak-kinds=all --track-fds=yes --leak-check=full --track-origins=yes ./*.exe
 
