@@ -67,7 +67,7 @@ zero_flag 08000000
 push d0000000
 pop e0000000
 
-//alu masks: first oper reg,sec oper reg, dst reg, reg type
+;alu masks: first oper reg,sec oper reg, dst reg, reg type
 07C00000
 003E0000
 0001F000
@@ -76,30 +76,30 @@ pop e0000000
 000000C0
 
 
-//load immedite masks: dest reg, value
+;load immedite masks: dest reg, value
 07C00000
 0000FFFF
 	
-//memory op masks: reg with value(store)/ dest reg(load) reg with addres(load and store) reg types
+;memory op masks: reg with value(store)/ dest reg(load) reg with addres(load and store) reg types
 07C00000
 003E0000
 00000030
 00000003
 
-//memory op masks: reg with value(store)/ dest reg(load) reg with addres(load and store) reg types
+;memory op masks: reg with value(store)/ dest reg(load) reg with addres(load and store) reg types
 07C00000
 000FF000
 00000FFF
 
-//conditional op masks: addr to jump to
+;conditional op masks: addr to jump to
 0000FFFF
 
-//cmp masks: reg to compare, value to compare
+;cmp masks: reg to compare, value to compare
 07C00000
 003FFFFF
 
-//flag masks: zero flag
+;flag masks: zero flag
 00000001
 
-//push and pop masks 
+;push and pop masks 
 0000001F

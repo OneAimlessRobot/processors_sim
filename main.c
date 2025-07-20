@@ -22,7 +22,7 @@ void sigint_handler(int param){
 	nocbreak();
 	endwin();
 	getc(stdin);
-	remove(TMP_FILE_NAME);
+	//remove(TMP_FILE_NAME);
 	exit(param);
 
 }
@@ -55,7 +55,10 @@ int main(void){
 		perror("Invalid file path!!!\n");
 		exit(-1);
 	}
-	sys=spawnOS();
+	if(!(sys=spawnOS())){
+
+		raise(SIGINT);
+	}
 	compile(sys->proc->dec2,fpcode,fpcompiled);
 	fclose(fpcompiled);
 	if(!(fpcompiled=fopen(INSTR_FILE_PATH,"r"))){

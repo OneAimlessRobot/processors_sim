@@ -488,7 +488,8 @@ static void endCPU(cpu** processor){
 
 static cpu* spawnCPU(void){
         cpu* result= malloc(sizeof(cpu));
-        result->curr_pc=0;
+        memset(result,0,sizeof(cpu));
+	result->curr_pc=0;
 	result->prev_pc=0;
 	result->instr_reg=0;
         result->stack_pointer=0;
@@ -539,11 +540,12 @@ os* spawnOS(void){
 	result->mem=spawnMemory();
 	result->avail_memory=result->mem->size/WORD_SIZE;
 	result->proc=spawnCPU();
-	result->proc->running_system=result;
 	if(!result->proc){
 		perror("ERRO A SPAWNAR OS!!!!\n");
 		endOS(&result);
+		return result;
 	}
+	result->proc->running_system=result;
 	return result;
 
 }
