@@ -3,9 +3,12 @@
 *.cmi
 *.class
 *.exec
+*.exe
 *.cmx
 *.a
 *.o
 *.exe
 *.d
+*.swp
+*.save
 .metadata/
