@@ -25,7 +25,7 @@ void sigint_handler(int param){
 	nocbreak();
 	endwin();
 	getc(stdin);
-	//remove(TMP_FILE_NAME);
+	remove(TMP_FILE_NAME);
 	exit(param);
 
 }
@@ -82,7 +82,7 @@ int main(void){
 		perror("Erro nas flags!!!\n");
 		raise(SIGINT);
 	}
-    	flags |= O_NONBLOCK;
+    	flags |= FD_CLOEXEC;
     	if (fcntl(0, F_SETFD, flags) == -1){
 
 		perror("Erro nas flags!!!\n");
