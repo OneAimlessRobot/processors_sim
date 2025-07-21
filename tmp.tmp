@@ -1,41 +1,28 @@
 .data:
-one_value_reg word 1;sdaasdasd
-zero_value_reg word 0; sdadas asd
-result_reg word 9; asdadds 
-num_to_factorial word 10  
-fact_param_reg word 10; asdasdda
-;
-;
-;z
-;s<
-;asa,sda,sd
-mult_param_1_reg word 19
-;;
-
-;;
-
-;s
-;a
-;as,as,as
-mult_param_2_reg word 18
-curr_it_reg word 3
-
+testvalue1 byte 255 255 255 255 255 255
+testvalue2 word 1
+testvalue3 word 10
 .code:
 start:
-	
-fact_iteration:	
-	                                   add 9 2 19 0 0 0 
-	                                     add 10 2 18 0 0 0 
-	                                     sub 10 1 10 0 0 0 
-	                   cmp 10 0 
-	               bz 8 
-	                   bnz 1 
-mult: 
-	                                   add 9 19 9 0 0 0 
-	                                     sub 18 1 18 0 0 0 
-	
-	                   cmp 18 1 
-	                                     bz -11 
-	                   bnz -5 
+
+                                          loadi 1 0 2 0 0 
+                                          loadi 2 0 3 0 0 
+                   limm 3 0 
+
+the_label:
+                                 sub 2 1 2 0 0 0 
+                                 add 3 1 3 0 0 0 
+               push 2 
+                 cmp 2 0 
+                                   bz 2 
+                             bnz -6 
+
+the_label_pt2:
+                                 sub 3 1 3 0 0 0 
+             pop 4 
+                 cmp 3 0 
+                                     bnz -4 
 
 end:
+             pop 6 
+

@@ -11,7 +11,7 @@
 #define CPU_FILE_PATH "resources/test2.cpu"
 #define CPU_DEC_PATH "resources/test4.cpu"
 #define PROGRAM_FILE_PATH "resources/test3.cpu"
-#define PROGRAM_FILE2_PATH "resources/test3.cpu"
+#define PROGRAM_FILE2_PATH "resources/test5.cpu"
 #define TMP_FILE_NAME "tmp.tmp"
 
 #define PROC_STACK_SIZE 50
@@ -20,5 +20,5 @@
 #define BUFFSIZE 1024
 
 #define TIMEOUT_IN 0
-#define TIMEOUT_IN_US 10000
+#define TIMEOUT_IN_US 1000
 #endif
