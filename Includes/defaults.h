@@ -11,7 +11,7 @@
 #define CPU_FILE_PATH "resources/cpu_arch.cpu"
 #define CPU_DEC_PATH "resources/cpu_dec.cpu"
 #define PROGRAM_FILE_PATH "resources/test3.adriano"
-#define PROGRAM_FILE2_PATH "resources/test4.adriano"
+#define PROGRAM_FILE2_PATH "resources/test3.adriano"
 #define TMP_FILE_NAME "tmp.tmp"
 
 #define PROC_STACK_SIZE 50

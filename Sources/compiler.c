@@ -492,7 +492,7 @@ void process_data(char buff[COMPILER_BUFFSIZE],FILE* fpout){
 	get_next_instruction(fpmid,buff);
 	code_data_start=ftell(fpmid);
 	printf("buff em process_data: %s\n",buff);
-	}while(!strings_are_equal(buff,DATA_STRING)&&!feof(fpmid));
+	}while(!strings_are_equal(buff,DATA_STRING)&&!strings_are_equal(buff,CODE_STRING)&&!feof(fpmid));
 	int init_data_pos=ftell(fpmid);
 	code_code_start=code_data_start;
 	measure_data_size(buff,fpout);
@@ -507,7 +507,7 @@ void process_macros(char buff[COMPILER_BUFFSIZE]){
 	get_next_instruction(fpmid,buff);
 	code_macro_start=ftell(fpmid);
 	printf("buff em process_macros: %s\n",buff);
-	}while(!strings_are_equal(buff,MACRO_STRING)&&!feof(fpmid));
+	}while(!strings_are_equal(buff,MACRO_STRING)&&!strings_are_equal(buff,DATA_STRING)&&!strings_are_equal(buff,CODE_STRING)&&!feof(fpmid));
 	int init_macro_pos=ftell(fpmid);
 	code_data_start=code_macro_start;
 	fseek(fpmid,init_macro_pos,SEEK_SET);
