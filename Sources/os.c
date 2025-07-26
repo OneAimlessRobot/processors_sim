@@ -214,7 +214,6 @@ static void printOS(int fd,os* system){
 	}
 	else{
 	if(print_os){
-	//clear();
 	erase();
 	printw("\n-----------------------\n|--State of this os--|\n-----------------------\n");
 	if(print_cpu){
@@ -233,20 +232,6 @@ static void printOS(int fd,os* system){
 }
 
 static void printThings(int fd,os*system){
-		/*int pid=fork();
-		switch(pid){
-			case -1:
-				endwin();
-				perror("Erro no fork no menu!!!!\n");
-				raise(SIGPIPE);
-				break;
-			case 0:
-				raise(SIGPIPE);
-				break;
-			default:
-				break;
-		
-		}*/
 			printOS(fd,system);
 				
 
@@ -266,7 +251,6 @@ void menu(int fd){
 		}
 		}
 		else{
-		//usleep((TIMEOUT_IN*1000000)+TIMEOUT_IN_US);
 		c=(int )getch();
 		}
 		switch(c){
@@ -375,15 +359,15 @@ void loadProg(FILE* progfile,os* system){
 	u_int32_t code_size=0;
 	u_int32_t value=0;
 	u_int32_t curr_data=0;
-	fscanf(progfile,"%x",&spawned_data_size);
+	fread(&spawned_data_size,sizeof(u_int32_t),1,progfile);
 	while(curr_data<spawned_data_size){
-		fscanf(progfile,"%x",&value);
+		fread(&value,sizeof(u_int32_t),1,progfile);
 		dprintf(1,"Carreguei dados. curr_data_cell= %d\n",curr_data);
 		storeValue(system->mem, curr_data*WORD_SIZE, WORD_SIZE, (void*)&value);
 		curr_data++;
 	}
 	u_int32_t code_pos=ftell(progfile);
-	while((fscanf(progfile,"%x",&value)==1)){
+	while((fread(&value,sizeof(u_int32_t),1,progfile))==1){
 		dprintf(1,"Li instruçao. code_size= %d\n",code_size);
 		code_size++;
 	}
@@ -403,7 +387,7 @@ void loadProg(FILE* progfile,os* system){
 	ctx->proc_code_start=ctx->proc_data_start+ctx->proc_data_size;
 	u_int32_t curr_cell=ctx->proc_code_start;
 	curr_cell=ctx->proc_code_start;
-	while((fscanf(progfile,"%x",&value)==1)&&(curr_cell<(ctx->proc_code_start+code_size))){
+	while(((fread(&value,sizeof(u_int32_t),1,progfile))==1)&&(curr_cell<(ctx->proc_code_start+code_size))){
 		dprintf(1,"Carreguei instruçao. curr_mem_cell= %d\n",curr_cell);
 		storeValue(system->mem, curr_cell*WORD_SIZE, WORD_SIZE, (void*)&value);
 		curr_cell++;

@@ -68,8 +68,8 @@ static void load_generic_data(char* ptr,FILE* fp,int counting_mode,u_int8_t num_
 		}
 		if(i){
 		if(!counting_mode){
-			fprintf(fp,"%x\n",curr_word);
-		curr_code++;
+			fwrite(&curr_word,sizeof(u_int32_t),1,fp);
+			curr_code++;
 		}
 		else{
 
@@ -394,7 +394,7 @@ void process_data(char buff[1024],FILE* fpout){
 	code_code_start=code_data_start;
 	measure_data_size(buff,fpout);
 	fseek(fpmid,init_data_pos,SEEK_SET);
-	fprintf(fpout,"%d\n",data_size);
+	fwrite(&data_size,sizeof(u_int32_t),1,fpout);
 	load_names(buff,fpout);
 }
 u_int32_t instr_buff_is_space(char buff[1024]){
@@ -502,7 +502,7 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 	u_int32_t inst=0x0;
 	if(strlen(buff)&&((buff[strlen(buff)-1]=='\n')||(buff[strlen(buff)-1]==':'))){
 	inst=process_instruction(dec,buff);
-	fprintf(fpout,"%x\n",inst);
+	fwrite(&inst,sizeof(u_int32_t),1,fpout);
 	}
 	}
 	for(int32_t i=0;i<num_of_names;i++){

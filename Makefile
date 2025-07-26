@@ -1,13 +1,15 @@
-BINARY= processors_sim.exe
-
+BINARY= ./processors_sim.exe
 LDLIBS=  -lm -lncurses
 INCLUDE= ./Includes .
 SOURCES= . ./Sources
 RESDIR= ./resources
- 
+
 CURRDIR=echo `pwd`
- 
+
 CC= gcc
+
+#CC= /f/msys64/mingw64.exe
+
 DEPFLAGS= -MP -MD
 
 CFLAGS= -Wall -DPROGRAMPATHAUX="$(CURRDIR)"  -Wextra -g $(foreach D, $(INCLUDE), -I$(D)) $(DEPFLAGS)
