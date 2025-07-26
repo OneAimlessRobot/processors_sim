@@ -13,7 +13,7 @@
 #include "../Includes/decoder.h"
 #include "../Includes/compiler.h"
 
-static int32_t curr_code_2=0, data_size=0,code_code_start=0,code_data_start=0,curr_code=0,num_of_names=0,num_of_labels=0;
+static int32_t curr_code_2=0, data_size=0,code_code_start=0,code_data_start=0,code_macro_start=0,curr_code=0,num_of_names=0,num_of_labels=0,num_of_macros=0;
 
 FILE* fpmid=NULL;
 static decoder* priv_dec=NULL;
@@ -28,6 +28,8 @@ static symbol avail_names[MAX_NAMES]={0};
 
 static symbol avail_labels[MAX_NAMES]={0};
 
+static macro avail_macros[MAX_NAMES]={0};
+
 static u_int32_t mask_photograph(u_int32_t mask,u_int32_t value){
 	u_int8_t advance=firstBitOne(mask);
 	u_int8_t retreat=firstBitOne(mask);
@@ -37,6 +39,25 @@ static u_int32_t mask_photograph(u_int32_t mask,u_int32_t value){
 	result<<=advance;
 	return result;
 	
+
+}
+
+static void cleanup(void){
+
+	for(int32_t i=0;i<num_of_names;i++){
+		free(avail_names[i].string);
+		
+	}
+	for(int32_t i=0;i<num_of_labels;i++){
+		free(avail_labels[i].string);
+		
+	}
+	/*for(int32_t i=0;i<num_of_macros;i++){
+		free(avail_macros[i].macro_tag);
+		free(avail_macros[i].macro_text);
+	}*/
+
+
 
 }
 
@@ -130,18 +151,38 @@ static symbol* find_in_name_table(symbol table[],char* string){
 
 
 }
-static int32_t get_next_instruction(FILE* fp,char buff[1024]){
+static macro* find_in_macro_table(macro table[],char* string){
+	if(!string){
+		printf("null string in compiler curr var finder!!!!\n");
+		return NULL;
+	}
+	if(!strlen(string)){
+		printf("empty string in compiler curr var finder!!!!\n");
+		return NULL;
+	}
+	for(int i=0;strnlen(table[i].macro_tag,MAX_MACRO_TEXT_SIZE);i++){
+		
+		if(strings_are_equal(table[i].macro_tag,string)){
+			return &table[i];
+		}
+
+	}
+	return NULL;
+
+
+}
+static int32_t get_next_instruction(FILE* fp,char buff[COMPILER_BUFFSIZE]){
 	
 	skip_cpu_comments(fp);
 	int32_t init_of_instr=ftell(fp);
 	int curr_char=0;
 	u_int64_t curr_char_index=0;
-	memset(buff,0,1024);
+	memset(buff,0,COMPILER_BUFFSIZE);
 	while((curr_char=fgetc(fp))!=':'&&(curr_char)!='\n'&&curr_char !=EOF){
 		buff[curr_char_index++]=(char)curr_char;
 	}
 	if(curr_char==EOF){
-	memset(buff,0,1024);
+	memset(buff,0,COMPILER_BUFFSIZE);
 	return init_of_instr;
 	}
 	buff[curr_char_index]=curr_char;
@@ -159,7 +200,7 @@ static u_int32_t decypher_instruction(u_int32_t code,instr_info *sym,char* buff)
 		int advance=0;
 		if(!sscanf(ptr,"%hd%n",&arg,&advance)){
 			
-			dprintf(1,"Compiling error!!!!! bad instruction syntax in instruction of code%x!!!!\nNULL instruction loaded!\n",code);
+			dprintf(1,"Compiling error!!!!! bad instruction syntax in instruction of code %x!!!!\nNULL instruction loaded!\n",code);
 			return result;
 		}
 		if(code==LMEMR){
@@ -211,9 +252,9 @@ fseek(fp, pos2, SEEK_SET);
 
 
 }
-static u_int32_t process_instruction(decoder*dec,char buff[1024]){
+static u_int32_t process_instruction(decoder*dec,char buff[COMPILER_BUFFSIZE]){
 	char* ptr=buff;
-	char instr_name[1024]={0};
+	char instr_name[COMPILER_BUFFSIZE]={0};
 	int num_consumed=0;
 	
 	sscanf(ptr,"%s%n",instr_name,&num_consumed);
@@ -228,7 +269,7 @@ static u_int32_t process_instruction(decoder*dec,char buff[1024]){
 
 }
 
-static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_t num,int32_t relative){
+static void substitute_macros(macro table[],int instr_pos,char buff[COMPILER_BUFFSIZE]){
 	
 	int curr_str_len=strlen(buff);
 	if(!curr_str_len){
@@ -236,7 +277,57 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 	}
 	int subst_cursor=0;
 	int ntokens=0;
-	char newInstr[1024]={0};
+	char newInstr[COMPILER_BUFFSIZE]={0};
+	char* ptr=newInstr;
+	char* old_buff_ptr=buff;
+	char curr_token[128]={0};
+	while(1){
+
+	if(sscanf(old_buff_ptr,"%s%n",curr_token,&subst_cursor)>0){
+		ntokens++;
+	}if(!strlen(curr_token)){
+		newInstr[strlen(newInstr)]='\n';
+		break;
+	}
+	
+	if(curr_token[strlen(curr_token)-1]==':'){
+
+		return;
+	}
+		macro* trip=NULL;
+		
+		if(ntokens==1&&!find_instr_with_name(priv_dec,curr_token)){
+		
+
+				cleanup();
+				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
+				raise(SIGINT);
+		}
+
+		printf("Token: %s\n",curr_token);
+		if((trip=find_in_macro_table(table,curr_token))){
+			ptr+=snprintf(ptr,128,"%s ",trip->macro_text);
+			printf("Replaced: %s\nWith: %s\n",curr_token,trip->macro_text);
+		}
+		else {
+			ptr+=snprintf(ptr,128,"%s ",curr_token);
+		}
+		old_buff_ptr+=subst_cursor;
+		memset(curr_token,0,128);
+	}
+	
+	emplaceString(fpmid, newInstr,strlen(newInstr),curr_str_len,instr_pos);
+
+}
+static void substitute_names(symbol table[],int instr_pos,char buff[COMPILER_BUFFSIZE],int32_t num,int32_t relative){
+	
+	int curr_str_len=strlen(buff);
+	if(!curr_str_len){
+		return;
+	}
+	int subst_cursor=0;
+	int ntokens=0;
+	char newInstr[COMPILER_BUFFSIZE]={0};
 	char* ptr=newInstr;
 	char* old_buff_ptr=buff;
 	char curr_token[128]={0};
@@ -256,14 +347,8 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 		symbol* trip=NULL;
 		
 		if(ntokens==1&&!find_instr_with_name(priv_dec,curr_token)){
-				for(int32_t i=0;i<num_of_names;i++){
-				free(avail_names[i].string);
-
-				}
-				for(int32_t i=0;i<num_of_labels;i++){
-				free(avail_labels[i].string);
-
-				}
+				
+				cleanup();
 				printf("ERRO DE COMPILACAO!!!! Instruçao desconhecida '%s'!!!!!",curr_token);
 				raise(SIGINT);
 		}
@@ -289,13 +374,12 @@ static void substitute_names(symbol table[],int instr_pos,char buff[1024],int32_
 	emplaceString(fpmid, newInstr,strlen(newInstr),curr_str_len,instr_pos);
 
 }
-
-static void load_names(char buff[1024],FILE*fpout){
+static void load_names(char buff[COMPILER_BUFFSIZE],FILE*fpout){
 while(1){
 	
 	get_next_instruction(fpmid,buff);
 	code_code_start=ftell(fpmid);
-	if(strings_are_equal(buff,".code:")){
+	if(strings_are_equal(buff,CODE_STRING)){
 		break;
 	}
 	symbol trip={NULL,0,0};
@@ -319,7 +403,7 @@ while(1){
 	}
 	if(trip.string){
 
-		printf("%s %u\n",trip.string,trip.addr);
+		printf("data: %s %u\n",trip.string,trip.addr);
 		avail_names[num_of_names]=trip;
 	
 	}
@@ -334,12 +418,37 @@ while(1){
 
 
 }
-static void measure_data_size(char buff[1024],FILE*fpout){
+static void load_macros(char buff[COMPILER_BUFFSIZE]){
 while(1){
 	
 	get_next_instruction(fpmid,buff);
 	code_code_start=ftell(fpmid);
-	if(strings_are_equal(buff,".code:")){
+	if(strings_are_equal(buff,DATA_STRING)){
+		break;
+	}
+	macro mac={0};
+	//scanf("\"%[^\"]\"",s);
+	sscanf(buff,"%s%s",mac.macro_tag,mac.macro_text);
+	if(strnlen(mac.macro_tag,MAX_MACRO_TEXT_SIZE)&&strnlen(mac.macro_text,MAX_MACRO_TEXT_SIZE)){
+
+		avail_macros[num_of_macros]=mac;
+		printf("macro: %s %s\n",avail_macros[num_of_macros].macro_tag,avail_macros[num_of_macros].macro_text);
+		
+	}
+	else{
+		printf("erro a parsear macro: %s %s\n",mac.macro_tag,mac.macro_text);
+	}
+	num_of_macros++;
+	}
+
+
+}
+static void measure_data_size(char buff[COMPILER_BUFFSIZE],FILE*fpout){
+while(1){
+	
+	get_next_instruction(fpmid,buff);
+	code_code_start=ftell(fpmid);
+	if(strings_are_equal(buff,CODE_STRING)){
 		break;
 	}
 	char* string;
@@ -349,15 +458,8 @@ while(1){
 	sscanf(buff,"%ms%ms%n",&string,&data_type_str,&advance);
 	ptr+=advance;
 	if(!find_in_string_arr(data_types_table,data_type_str)){
-		for(int32_t i=0;i<num_of_names;i++){
-		free(avail_names[i].string);
 
-		}
-		for(int32_t i=0;i<num_of_labels;i++){
-		free(avail_labels[i].string);
-
-		}
-
+		cleanup();
 		dprintf(1,"Erro de compilaçao: Tipo desconhecido '%s'.",data_type_str);
 		raise(SIGINT);
 	}
@@ -383,13 +485,14 @@ while(1){
 }
 
 }
-void process_data(char buff[1024],FILE* fpout){
+void process_data(char buff[COMPILER_BUFFSIZE],FILE* fpout){
 	
 	
 	do{
 	get_next_instruction(fpmid,buff);
 	code_data_start=ftell(fpmid);
-	}while(!strings_are_equal(buff,".data:"));
+	printf("buff em process_data: %s\n",buff);
+	}while(!strings_are_equal(buff,DATA_STRING)&&!feof(fpmid));
 	int init_data_pos=ftell(fpmid);
 	code_code_start=code_data_start;
 	measure_data_size(buff,fpout);
@@ -397,7 +500,21 @@ void process_data(char buff[1024],FILE* fpout){
 	fwrite(&data_size,sizeof(u_int32_t),1,fpout);
 	load_names(buff,fpout);
 }
-u_int32_t instr_buff_is_space(char buff[1024]){
+void process_macros(char buff[COMPILER_BUFFSIZE]){
+	
+	
+	do{
+	get_next_instruction(fpmid,buff);
+	code_macro_start=ftell(fpmid);
+	printf("buff em process_macros: %s\n",buff);
+	}while(!strings_are_equal(buff,MACRO_STRING)&&!feof(fpmid));
+	int init_macro_pos=ftell(fpmid);
+	code_data_start=code_macro_start;
+	fseek(fpmid,init_macro_pos,SEEK_SET);
+	load_macros(buff);
+	printf("Numero de macros: %d\n",num_of_macros);
+}
+u_int32_t instr_buff_is_space(char buff[COMPILER_BUFFSIZE]){
 	u_int32_t result=1;
 	for(u_int32_t i=0;(i<strlen(buff))&&(buff[i]!=':')&&(buff[i]!='\n');i++){
 		result=(result&&isspace(buff[i]));
@@ -406,7 +523,7 @@ u_int32_t instr_buff_is_space(char buff[1024]){
 
 }
 void get_all_labels(void){
-	char buff[1024];
+	char buff[COMPILER_BUFFSIZE];
 	while(1){
 	if(feof(fpmid)||ferror(fpmid)){
 		break;
@@ -435,7 +552,7 @@ void get_all_labels(void){
 	
 }
 void substitute_all_names(symbol table[],u_int32_t relative){
-	char buff[1024];
+	char buff[COMPILER_BUFFSIZE];
 	while(1){
 	if(feof(fpmid)||ferror(fpmid)){
 		break;
@@ -452,11 +569,29 @@ void substitute_all_names(symbol table[],u_int32_t relative){
 
 	
 }
+void substitute_all_macros(macro table[]){
+	char buff[COMPILER_BUFFSIZE];
+	while(1){
+	if(feof(fpmid)||ferror(fpmid)){
+		break;
+	}
+	int instr_pos=get_next_instruction(fpmid,buff);
+	if(instr_buff_is_space(buff)){
+
+	}
+	else{
+	substitute_macros(table,instr_pos,buff);
+	curr_code_2++;
+	}
+	}
+
+	
+}
 void copyInputFile(FILE* fpin){
 
-	char buff[1024]={0};
+	char buff[COMPILER_BUFFSIZE]={0};
 	int num_read=0;
-	while((num_read=fread(buff,1,1024,fpin))){
+	while((num_read=fread(buff,1,COMPILER_BUFFSIZE,fpin))){
 		fwrite(buff,1,num_read,fpmid);
 	}
 	
@@ -475,20 +610,28 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 		perror("Error opening tmp file while compiling!!!!\n");
 		return;
 	}
-	char buff[1024];
+	char buff[COMPILER_BUFFSIZE];
+	process_macros(buff);
+	fseek(fpmid,code_data_start,SEEK_SET);
+	memset(buff,1,COMPILER_BUFFSIZE-1);
 	process_data(buff,fpout);
 	fseek(fpmid,code_code_start,SEEK_SET);
-	memset(buff,1,1023);
+	memset(buff,1,COMPILER_BUFFSIZE-1);
 	u_int32_t prog_start=curr_code_2=curr_code;
+
+	substitute_all_macros(avail_macros);
+	fseek(fpmid,code_code_start,SEEK_SET);
+	memset(buff,1,COMPILER_BUFFSIZE-1);
+
 	substitute_all_names(avail_names,0);
 	fseek(fpmid,code_code_start,SEEK_SET);
-	memset(buff,1,1023);
+	memset(buff,1,COMPILER_BUFFSIZE-1);
 	curr_code=curr_code_2=prog_start;
 	get_all_labels();
-	buff[1023]=0;
+	buff[COMPILER_BUFFSIZE-1]=0;
 	fseek(fpmid,code_code_start,SEEK_SET);
-	memset(buff,1,1023);
-	curr_code=curr_code_2=prog_start;
+	memset(buff,1,COMPILER_BUFFSIZE-1);
+	curr_code=curr_code_2;
 	substitute_all_names(avail_labels,1);
 	fseek(fpmid,code_code_start,SEEK_SET);
 	while(strlen(buff)){
@@ -505,14 +648,8 @@ void compile(decoder*dec,FILE* fpin,FILE* fpout){
 	fwrite(&inst,sizeof(u_int32_t),1,fpout);
 	}
 	}
-	for(int32_t i=0;i<num_of_names;i++){
-		free(avail_names[i].string);
-		
-	}
-	for(int32_t i=0;i<num_of_labels;i++){
-		free(avail_labels[i].string);
-		
-	}
+	cleanup();
+
 	fclose(fpmid);
 	fpmid=NULL;
 }

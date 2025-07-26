@@ -1,3 +1,4 @@
+.macro:
 .data:
 testvalue1 byte 255 255 255 255 255 255
 testvalue2 word 1

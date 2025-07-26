@@ -1,19 +1,20 @@
+.macro:
+the_value_I_want 6
 .data:
 testvalue1 byte 255 255 255 255 255 255
 testvalue2 word 6
 testvalue3 word 7
 .code:
 start:
-limm 2 testvalue1
-
+limm 2 the_value_I_want
 loadi 1 2 1
-push 1
-limm 2 testvalue2
+push 2
+limm 2 the_value_I_want
 load 1 2 0 0
-push 1
-limm 2 testvalue3
+push 2
+limm 2 the_value_I_want
 load 1 2 0 0
-push 1
+push 2
 pop 4
 pop 5
 pop 6

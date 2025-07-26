@@ -87,12 +87,12 @@ int main(void){
 
 		perror("Erro nas flags!!!\n");
 		raise(SIGINT);
-	
+
 	}
 
 	}
 	loadProg(fpcompiled,sys);
 	switchOnCPU(fd,sys);
-	
+
 	raise(SIGINT);
 }

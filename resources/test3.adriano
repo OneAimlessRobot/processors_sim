@@ -1,3 +1,4 @@
+.macro:
 .data:
 one_value_reg word 1;sdaasdasd
 zero_value_reg word 0; sdadas asd
