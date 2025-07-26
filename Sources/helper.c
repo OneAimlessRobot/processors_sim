@@ -68,8 +68,8 @@ int32_t lastBitOne(u_int32_t line){
 void skip_cpu_comments(FILE* fp){
 
 	int curr_char=0;
-	char buff[BUFFSIZE]={0};
-	char* result=NULL;
+//	char buff[BUFFSIZE]={0};
+//	char* result=NULL;
 
 	skip_comment:
 	while(isspace((curr_char=fgetc(fp)))&&curr_char!=EOF);

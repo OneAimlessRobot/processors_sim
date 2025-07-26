@@ -48,10 +48,10 @@ static void process_stack_op(decoder*dec,u_int32_t inst,u_int32_t* reg){
 }
 
 void proc_mem_op(cpu*proc,op_code code){
-u_int32_t memregval,memaddrreg,memregtype;
-u_int32_t memireg,memiaddr,memioff;
-int16_t addr;
-u_int32_t stack_value_reg,stack_dest_reg;
+u_int32_t memregval=0,memaddrreg=0,memregtype=0;
+u_int32_t memireg=0,memiaddr=0,memioff=0;
+int16_t addr=0;
+u_int32_t stack_value_reg=0,stack_dest_reg=0;
 switch(code){
 	case STO:
 		process_mem_op(proc->dec2,proc->instr_reg,&memregval,&memaddrreg,&memregtype);
